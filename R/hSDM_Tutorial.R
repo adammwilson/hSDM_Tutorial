@@ -1,18 +1,18 @@
 #' ---
-#' title: "Overview of "
+#' title: "Overview of hSDM"
 #' author: "Adam M. Wilson"
 #' date: "January 6, 2015"
 #' output:
-#' knitrBootstrap::bootstrap_document:
-#' highlight: Magula
-#' highlight.chooser: no
-#' theme: cerulean
-#' theme.chooser: no
-#' pdf_document:
-#' toc: true
-#' toc_depth: 2
-#' md_document:
-#' variant: markdown_github
+#'   knitrBootstrap::bootstrap_document:
+#'     highlight: Magula
+#'     highlight.chooser: no
+#'     theme: cerulean
+#'     theme.chooser: no
+#'   pdf_document:
+#'     toc: true
+#'     toc_depth: 2
+#'   md_document:
+#'     variant: markdown_github
 #' ---
 #' 
 ## ----, echo=FALSE, warning=FALSE-----------------------------------------
@@ -21,16 +21,23 @@ library(rmarkdown)
 
 opts_chunk$set(cache=TRUE,root.dir="/Users/adamw/repos/hSDM_Tutorial",warning=FALSE)
 
-# purl("ParallelR/ParallelR.Rmd","ParallelR/ParallelR.R",documentation=2)
-# rmarkdown::render("ParallelR/ParallelR.Rmd", "all")
+# purl("R/hSDM_Tutorial.Rmd","R/hSDM_Tutorial.R",documentation=2)
+# rmarkdown::render("R/hSDM_Tutorial.Rmd", "all")
 
+
+#' # Introduction to hSDM
+#' 
+#' ## Objectives
+#' 
+#' * Use opportunistic species occurrence data for occupancy modelling
+#' * Use `hSDM` R package to fit hierarchical distribution model
+#' * Compare output from models built with interpolated and satellite-derived environmental data
 #' 
 #' This script is available:
 #' 
-#'   * [hSDM Tutorial (https://github.com/adammwilson/SpatialAnalysisTutorials)](https://github.com/adammwilson/SpatialAnalysisTutorials)
-#'   * HTML format (with images/plots) at [](http://goo.gl/V4ETTi)
-#'   * Plain text (.R) with commented text at [](http://goo.gl/0LxUS6).
-#' 
+#'   * [hSDM Tutorial (https://github.com/adammwilson/hSDM_Tutorial)](On GitHub)
+#'   * [HTML format (with images/plots)] (https://rawgit.com/adammwilson/hSDM_Tutorial/master/R/hSDM_Tutorial.html)
+#'   * [Plain text (.R) with commented text](https://raw.githubusercontent.com/adammwilson/hSDM_Tutorial/master/R/hSDM_Tutorial.R)
 #' 
 #' If you don't have the packages above, install them in the package manager or by running `install.packages("doParallel")`. 
 #' 
