@@ -16,7 +16,11 @@
 library(knitr)
 library(rmarkdown)
 
-opts_chunk$set(cache=TRUE,root.dir="/Users/adamw/repos/hSDM_Tutorial",warning=FALSE)
+opts_chunk$set(cache=TRUE,
+               root.dir="/Users/adamw/repos/hSDM_Tutorial",
+               warning=FALSE,
+               message=F,
+               fig.width=15,fig.height=15)
 
 # purl("R/hSDM_Tutorial.Rmd","R/hSDM_Tutorial.R",documentation=2)
 # rmarkdown::render("R/hSDM_Tutorial.Rmd", "all")
@@ -74,18 +78,19 @@ ncores=2  # number of processor cores you would like to use
 registerDoParallel(ncores)
 
 ## set light theme for ggplot
-theme_set(theme_light())
+theme_set(theme_light()+theme(text=element_text(size = 32)))
 
 
 #' 
 #' 
+#' __________
 #' 
-#' ## Select Species
-#' For this example we'll work with the Montane Woodcreeper (_Lepidocolaptes lacrymiger_).
+#' ## Example Species: *Montane Woodcreeper* (_Lepidocolaptes lacrymiger_)
 #' 
-#' ![test](../data/Lepidocolaptes_lacrymiger/Lepidocolaptes_lacrymiger.jpg)
-#' <span style="color:grey; font-size:1em;">Figure from [here](test) </span>
+#' ![Lepidocolaptes_lacrymiger Photo](../assets/Lepidocolaptes_lacrymiger.jpg)
+#' <br><span style="color:grey; font-size:1em;">Figure from [hbw.com](http://www.hbw.com/species/montane-woodcreeper-lepidocolaptes-lacrymiger) </span>
 #' 
+#' > This species has a large range, occurring from the coastal cordillera of Venezuela along the Andes south to south-east Peru and central Bolivia. [birdlife.org](http://www.birdlife.org/datazone/speciesfactsheet.php?id=31946)
 #' 
 ## ------------------------------------------------------------------------
 sp="Lepidocolaptes_lacrymiger"
@@ -97,7 +102,7 @@ datadir=paste0("../data/",sp,"/")
 #' 
 #' 
 #' 
-#' ## Species 'expert range' via MOL.
+#' ## Extract species 'expert range' via MOL.
 #' 
 ## ----,eval=FALSE---------------------------------------------------------
 ## download.file(paste0("http://mol.cartodb.com/api/v2/sql?",
@@ -122,12 +127,11 @@ ereg@xmin=-81.4
 #' ## Query eBird data contained in MOL
 #' 
 #' * Find all observations of our species
-#' * Find all unique eBird observation locations
-#' * Within bounding box of expert range
-#' * Observer indicated that they recorded all observed species (`all_species_reported='t'`)
-#' * Do not correspond to an observation of our species
+#' * Find all unique observation locations for any species limited to bounding box of expert range
+#' * Filter to where observer indicated recording all observed species (`all_species_reported='t'`)
+#' * Filter to lists that do not correspond to an observation of our species
 #' 
-#' > Discuss future availability of tools like this in MOL
+#' > The best method for selecting data to use for _non-detections_ is very case and dataset specific.
 #' 
 #' Metadata for eBird^[M. Arthur Munson, Kevin Webb, Daniel Sheldon, Daniel Fink, Wesley M. Hochachka, Marshall Iliff, Mirek Riedewald, Daria Sorokina, Brian Sullivan, Christopher Wood, and Steve Kelling. The eBird Reference Dataset, Version 5.0. Cornell Lab of Ornithology and National Audubon Society, Ithaca, NY, January 2013.] is [available here](http://ebirddata.ornith.cornell.edu/downloads/erd/ebird_all_species/erd_western_hemisphere_data_grouped_by_year_v5.0.tar.gz)
 #' 
@@ -136,48 +140,69 @@ ereg@xmin=-81.4
 ## ----, eval=FALSE--------------------------------------------------------
 ## 
 ## # install_github("pingles/redshift-r")
-## getebird=function(con, sptaxon, nulltaxon=NULL,region){
+## getebird=function(con, sptaxon, region){
 ##   print(paste("Extracting data, this can take a few minutes..."))
-##   if(!is.null(nulltaxon)){  #return only species in list as 'non-detection'
-##     dbGetQuery(conn,
-##                paste(
-##                  "WITH ebird_subset as (SELECT all_species_reported,taxonomic_order,latitude,longitude,observation_date,sampling_event_identifier,group_identifier,effort_distance_km,effort_area_ha,duration_minutes",
-##                  "FROM ebird",
-##                  "WHERE latitude BETWEEN ",paste(bbox(region)["y",],collapse=" AND "),
-##                  "AND longitude BETWEEN ",paste(bbox(region)["x",],collapse=" AND "),
-##                  "AND floor(taxonomic_order) IN (",paste(c(sptaxon,nulltaxon),collapse=","),")),",
-##                  "presence as (SELECT DISTINCT latitude,longitude,observation_date,sampling_event_identifier,group_identifier,effort_distance_km,effort_area_ha,duration_minutes,1 AS presence ",
-##                  "FROM ebird_subset",
-##                  "WHERE floor(taxonomic_order) IN (",paste(sptaxon,collapse=","),")),",
-##                  "absence as (SELECT DISTINCT latitude,longitude,observation_date,sampling_event_identifier,group_identifier,effort_distance_km,effort_area_ha,duration_minutes,0 AS presence",
-##                  "FROM ebird_subset",
-##                  "WHERE all_species_reported='t'",
-##                  "AND sampling_event_identifier NOT IN (SELECT sampling_event_identifier FROM presence))",
-##                  "SELECT latitude,longitude,observation_date,presence,effort_distance_km,effort_area_ha,duration_minutes FROM presence",
-##                  "UNION",
-##                  "SELECT latitude,longitude,observation_date,presence,effort_distance_km,effort_area_ha,duration_minutes FROM absence"))
+##     dbGetQuery(conn,paste(
+##         "WITH ebird_subset as (SELECT
+##             all_species_reported,
+##             taxonomic_order,
+##             latitude,
+##             longitude,
+##             observation_date,
+##             sampling_event_identifier,
+##             group_identifier,
+##             effort_distance_km,
+##             effort_area_ha,
+##             duration_minutes
+##           FROM ebird
+##           WHERE latitude BETWEEN ",paste(bbox(region)["y",],collapse=" AND "),"
+##           AND longitude BETWEEN ",paste(bbox(region)["x",],collapse=" AND "),")
+##         presence as (SELECT DISTINCT
+##             latitude,
+##             longitude,
+##             observation_date,
+##             sampling_event_identifier,
+##             group_identifier,
+##             effort_distance_km,
+##             effort_area_ha,
+##             duration_minutes,
+##             1 AS presence
+##           FROM ebird_subset
+##           WHERE floor(taxonomic_order) IN (",paste(sptaxon,collapse=","),"))
+##           absence as (SELECT DISTINCT
+##             latitude,
+##             longitude,
+##             observation_date,
+##             sampling_event_identifier,
+##             group_identifier,
+##             effort_distance_km,
+##             effort_area_ha,
+##             duration_minutes,
+##             0 AS presence
+##           FROM ebird_subset
+##           WHERE all_species_reported='t'
+##           AND sampling_event_identifier NOT IN (SELECT
+##             sampling_event_identifier FROM presence))
+##           SELECT
+##             latitude,
+##             longitude,
+##             observation_date,
+##             presence,
+##             effort_distance_km,
+##             duration_minutes,
+##             effort_area_ha
+##           FROM presence
+##          UNION
+##           SELECT
+##               latitude,
+##               longitude,
+##               observation_date,
+##               presence,
+##               effort_distance_km,
+##               duration_minutes,
+##               effort_area_ha
+##           FROM absence"))
 ##     }
-##   if(is.null(nulltaxon)){  ## return all species as 'non-detections'
-##     dbGetQuery(conn,
-##                paste(
-##                  "WITH ebird_subset as (SELECT all_species_reported,taxonomic_order,latitude,longitude,observation_date,sampling_event_identifier,group_identifier,effort_distance_km,effort_area_ha,duration_minutes",
-##                  "FROM ebird",
-##                  "WHERE latitude BETWEEN ",paste(bbox(region)["y",],collapse=" AND "),
-##                  "AND longitude BETWEEN ",paste(bbox(region)["x",],collapse=" AND "),"),",
-##                  "presence as (SELECT DISTINCT latitude,longitude,observation_date,sampling_event_identifier,group_identifier,effort_distance_km,effort_area_ha,duration_minutes,1 AS presence ",
-##                  "FROM ebird_subset",
-##                  "WHERE floor(taxonomic_order) IN (",paste(sptaxon,collapse=","),")),",
-##                  "absence as (SELECT DISTINCT latitude,longitude,observation_date,sampling_event_identifier,group_identifier,effort_distance_km,effort_area_ha,duration_minutes,0 AS presence",
-##                  "FROM ebird_subset",
-##                  "WHERE all_species_reported='t'",
-##                  "AND sampling_event_identifier NOT IN (SELECT sampling_event_identifier FROM presence))",
-##                  "SELECT latitude,longitude,observation_date,presence,effort_distance_km,duration_minutes,effort_area_ha FROM presence",
-##                  "UNION",
-##                  "SELECT latitude,longitude,observation_date,presence,effort_distance_km,duration_minutes,effort_area_ha FROM absence"))
-##     }
-##   }
-## 
-## 
 
 #' 
 #' 
@@ -185,7 +210,7 @@ ereg@xmin=-81.4
 ## ----, eval=FALSE--------------------------------------------------------
 ## ## get species data
 ## require(redshift)
-## rs_url="jdbc:postgresql://mol-points.c98tkbi1cfwj.us-east-1.redshift.amazonaws.com:5439/mol?tcpKeepAlive=true"
+## rs_url="jdbc:postgresql://***redshift.amazonaws.com:5439/mol?tcpKeepAlive=true"
 ## 
 ## conn <- redshift.connect(rs_url)
 ## 
@@ -193,15 +218,22 @@ ereg@xmin=-81.4
 ##   con=conn,
 ##   sptaxon=sptaxon,
 ##   nulltaxon=NULL,
-##   region=reg)
+##   region=reg
+##   )
 ## 
 
 #' 
 #' ## Clean up the observational data
 #' 
-#' Load the table created in the step above.  
+#' Load the table created in the step above. These data are available in the public DropBox folder.
 ## ----loadSpd-------------------------------------------------------------
 spd_all=read.csv(paste0(datadir,sp,"_points.csv"))
+
+#' 
+#' 
+#' Check out the data structure from the SQL query:
+## ----headSpd, results='asis'---------------------------------------------
+kable(head(spd_all[,-1]))
 
 #' 
 #' Explore  observer effort: sampling duration, distance travelled, and area surveyed.
@@ -230,8 +262,10 @@ table("Duration"=!is.na(spd_all$duration_minutes),
         !is.na(spd_all$effort_area_ha))
 
 #' 
-#' > For this exercise, we'll simply remove points with large or unknown spatial uncertainty.
+#' > For this exercise, we'll simply remove points with large or unknown spatial uncertainty.  Incorporating this spatial uncertainty into distribution models is an active area of research.
 #' 
+#' 
+#' Filter the data below thresholds specified above.
 ## ----filterSpd-----------------------------------------------------------
 spd=filter(spd_all,duration_minutes<=cdur&
              (effort_distance_km<=cdis|effort_area_ha<=care))
@@ -246,12 +280,12 @@ projection(spd)="+proj=longlat +datum=WGS84 +ellps=WGS84"
 spd@data[,c("lon","lat")]=coordinates(spd)  
 
 #' 
-#' ### Load coastline for plotting
+#' ### Load coastline from maptools packge for plotting.
 ## ----loadCoast-----------------------------------------------------------
 coast <- map_data("world",
                   xlim=c(ereg@xmin-1,ereg@xmax+1),
                   ylim=c(ereg@ymin-1,ereg@ymax+1))
-ggcoast=geom_path(data=coast,aes(x=long,y=lat,group = group),lwd=.2)
+ggcoast=geom_path(data=coast,aes(x=long,y=lat,group = group),lwd=.1)
 
 ## set plotting limits
 gx=xlim(ereg@xmin-1,ereg@xmax+1)
@@ -260,22 +294,26 @@ gy=ylim(ereg@ymin-1,ereg@ymax+1)
 
 #' 
 #' ## Available Species Data
-## ----spdPlot-------------------------------------------------------------
+## ----spdPlot, message=FALSE----------------------------------------------
 ggplot(spd@data,aes(y=lat,x=lon))+
   geom_path(data=fortify(reg),aes(y=lat,x=long,group=piece),fill="green",col="green")+
-  geom_point(aes(colour=as.factor(presence),order=as.factor(presence)))+
+  geom_point(aes(colour=presence>=1,order=as.factor(presence)))+
   ggcoast+gx+gy+ylab("Latitude")+xlab("Longitude")+
-  labs(col = "Observed\nPresence")
+  labs(col = "Species\nObserved")+
+  coord_equal()
 
 
 #' 
-#' ### Load Environmental Data
+#' ______________________
+#' 
+#' 
+#' ## Environmental Data
 ## ----loadEnv-------------------------------------------------------------
 env=stack(paste0(datadir,sp,"env.tif"))
 names(env)=c("PPTJAN","PPTJUL","PPTSEAS","MAT","ALT","CLDJAN","CLDJUL","CLDSEAS")
 
 #' 
-#' ## Scale environmental data
+#' ### Scale environmental data
 #' Scaling covariate data results in standardized parameter values and also can speed up modeling convergence.  It's possible to _unscale_ the results later if desired.
 #' 
 ## ----scaleEnv------------------------------------------------------------
@@ -285,7 +323,7 @@ csd=cellStats(env,"sd")
 senv=raster::scale(env)
 
 #' 
-#' ### Intersect Environmental data
+#' ### Intersect environmental data
 ## ----gridSpd-------------------------------------------------------------
 ## add cell id to facilitate linking points to raster
 cell=env[[1]]
@@ -299,19 +337,19 @@ trials=rasterize(spd,env,fun="count",field="presence",background=0)
 #' 
 ## ----plotEnv-------------------------------------------------------------
 ## Environmental data
-gplot(senv,maxpixels=1e4)+
+gplot(senv)+
   geom_raster(aes(fill=value)) + 
   facet_wrap(~variable,nrow=2) +
-  scale_fill_gradientn(colours=c('blue','white','red'),breaks=c(-3,0,3,6),na.value="transparent")+
+  scale_fill_gradientn(colours=c('blue','white','red','darkred'),breaks=c(-3,0,3,6),na.value="transparent")+
   ylab("")+xlab("")+labs(fill = "Standardized\nValue")+
   ggcoast+gx+gy
 
-#' ## Covariate correlation
+#' ### Covariate correlation
 ## ----envCor--------------------------------------------------------------
-tcor=layerStats(senv, "pearson",asSample=F, na.rm=T)
-kable(tcor[[1]])
+splom(senv,varname.cex=2)
 
 #' 
+#' ### Generate data for model fitting
 ## ----spdReformat---------------------------------------------------------
 data=cbind.data.frame(
   coordinates(senv),
@@ -320,7 +358,7 @@ data=cbind.data.frame(
   cell=values(cell),
   values(senv))
 
-## omit rows with missing data
+## omit rows with missing data (primarily ocean pixels)
 data=na.omit(data)
 
 kable(head(data))
@@ -332,11 +370,15 @@ kable(head(data))
 #' 
 ## ----MakeFittingdata-----------------------------------------------------
 data$fit=ifelse(
-  data$trials>0 & data$trials>=data$presences,
+    data$trials>0 & 
+    data$trials>=data$presences,
   1,0)
 ## create 'fitting' dataset where there are observations
 fdata=data[data$fit>0,]
 
+#' 
+#' ## Model Comparison
+#' Let's compare two models, one using interpolated precipitation and the other using satellite-derived cloud data.
 #' 
 ## ----modelNames----------------------------------------------------------
 # Set number of chains to fit.
@@ -350,11 +392,11 @@ mods=data.frame(
 kable(mods)
 
 #' 
+#' Specify model run-lengths.  
 ## ----modelSetup----------------------------------------------------------
 burnin=1000
 mcmc=1000
 thin=1
-
 
 #' 
 ## ----runmodel------------------------------------------------------------
@@ -405,11 +447,11 @@ ggplot(params2,aes(x=mean,y=parameter,colour=model))+
 #' ## Predictions for each cell
 ## ------------------------------------------------------------------------
 
-pred=foreach(r1=results,.combine=stack)%do% {
+pred=foreach(r1=results,.combine=stack)%dopar% {
   tr=rasterFromXYZ(cbind(x=data$x,
                          y=data$y,
                          pred=r1$prob.p.pred))
-  names(tr)=r1$model    
+  names(tr)=r1$modelname    
   return(tr)
   }
 

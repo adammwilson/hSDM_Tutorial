@@ -64,7 +64,7 @@ Select Species
 
 For this example we'll work with the Montane Woodcreeper (*Lepidocolaptes lacrymiger*).
 
-![test](../data/Lepidocolaptes_lacrymiger/Lepidocolaptes_lacrymiger.jpg) <span style="color:grey; font-size:1em;">Figure from [here](test) </span>
+![Lepidocolaptes\_lacrymiger Photo](../assets/Lepidocolaptes_lacrymiger.jpg) <span style="color:grey; font-size:1em;">Figure from [here](http://www.hbw.com/species/montane-woodcreeper-lepidocolaptes-lacrymiger) </span>
 
 ``` {.r}
 sp="Lepidocolaptes_lacrymiger"
