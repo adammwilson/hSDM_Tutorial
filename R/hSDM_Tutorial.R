@@ -8,9 +8,6 @@
 #'     highlight.chooser: no
 #'     theme: cerulean
 #'     theme.chooser: no
-#'   pdf_document:
-#'     toc: true
-#'     toc_depth: 2
 #'   md_document:
 #'     variant: markdown_github
 #' ---
@@ -36,7 +33,7 @@ opts_chunk$set(cache=TRUE,root.dir="/Users/adamw/repos/hSDM_Tutorial",warning=FA
 #' This script is available:
 #' 
 #'   * [hSDM Tutorial (https://github.com/adammwilson/hSDM_Tutorial)](On GitHub)
-#'   * [HTML format (with images/plots)] (https://rawgit.com/adammwilson/hSDM_Tutorial/master/R/hSDM_Tutorial.html)
+#'   * [HTML format (with images/plots)](https://rawgit.com/adammwilson/hSDM_Tutorial/master/R/hSDM_Tutorial.html)
 #'   * [Plain text (.R) with commented text](https://raw.githubusercontent.com/adammwilson/hSDM_Tutorial/master/R/hSDM_Tutorial.R)
 #' 
 #' If you don't have the packages above, install them in the package manager or by running `install.packages("doParallel")`. 
@@ -432,6 +429,5 @@ gplot(pred)+geom_raster(aes(fill=value)) +
 #' 
 #' In this session, we illustrated:
 #' 
-#' * 
-#' * Use of the `hSDM` R package to fit a hierarical zero-inflated binomial species distribution model.
-#' * 
+#' * Used opportunistic species occurrence data and `hSDM` to fit an occupancy model
+#' * Compared output from models built with interpolated and satellite-derived environmental data
