@@ -1,0 +1,12 @@
+.Rproj.user
+.Rhistory
+.RData
+data
+R/hSDM_Tutorial_cache
+*.Rproj
+
+*.RData
+
+*.rdb
+
+*.rdx
