@@ -3,11 +3,6 @@ title: "Overview of hSDM"
 author: "Adam M. Wilson"
 date: "January 6, 2015"
 output:
-  knitrBootstrap::bootstrap_document:
-    highlight: Magula
-    highlight.chooser: no
-    theme: cerulean
-    theme.chooser: no
   md_document:
     variant: markdown_github
 ---
@@ -24,7 +19,7 @@ opts_chunk$set(cache=TRUE,
                fig.height=12)
 
 # purl("R/hSDM_Tutorial.Rmd","R/hSDM_Tutorial.R",documentation=2)
-# rmarkdown::render("R/hSDM_Tutorial.Rmd", "html")
+# rmarkdown::render("R/hSDM_Tutorial.Rmd", "all")
 
 ```
 # Introduction to hSDM
@@ -43,7 +38,7 @@ This script is available:
   * [HTML format with images/plots](https://rawgit.com/adammwilson/hSDM_Tutorial/master/R/hSDM_Tutorial.html)
   * [Plain text (.R) with commented text](https://raw.githubusercontent.com/adammwilson/hSDM_Tutorial/master/R/hSDM_Tutorial.R)
 
-
+The data used below are available in a [public dropbox folder]().
 
 # Species Distribution Modeling
 

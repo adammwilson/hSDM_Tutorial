@@ -8,13 +8,13 @@ Objectives
 -   Use `hSDM` R package to fit hierarchical distribution model
 -   Compare output from models built with interpolated and satellite-derived environmental data
 
+> One could easily teach an full semester course on the use of this package and modelling framework. Today we will provide only a quick introduction.
+
 This script is available:
 
--   [hSDM Tutorial (<https://github.com/adammwilson/hSDM_Tutorial>)](On%20GitHub)
--   [HTML format (with images/plots)](https://rawgit.com/adammwilson/hSDM_Tutorial/master/R/hSDM_Tutorial.html)
+-   [hSDM Tutorial on GitHub](https://github.com/adammwilson/hSDM_Tutorial)
+-   [HTML format with images/plots](https://rawgit.com/adammwilson/hSDM_Tutorial/master/R/hSDM_Tutorial.html)
 -   [Plain text (.R) with commented text](https://raw.githubusercontent.com/adammwilson/hSDM_Tutorial/master/R/hSDM_Tutorial.R)
-
-If you don't have the packages above, install them in the package manager or by running `install.packages("doParallel")`.
 
 Species Distribution Modeling
 =============================
@@ -24,17 +24,23 @@ Two major problems which can bias model results:
 1.  imperfect (and spatially biased) detections
 2.  spatial correlation of the observations.
 
-Introduction to hSDM R Package
-------------------------------
+hSDM R Package
+--------------
+
+Developed by [Ghislain Vieilledent](mailto:ghislain.vieilledent@cirad.fr) with Cory Merow, Jérôme Guélat, Andrew M. Latimer, Marc Kéry, Alan E. Gelfand, Adam M. Wilson, Frédéric Mortier & John A. Silander Jr
 
 -   User-friendly statistical functions to overcome limitations above.
 -   Developed in a hierarchical Bayesian framework.
 -   Call a Metropolis-within-Gibbs algorithm (coded in C) to estimate model parameters and drastically the computation time compared to other methods (e.g. \~2-10x faster than OpenBUGS).
 
+![hSDM](../assets/DetectionMods.png)
+
 The problem of imperfect detection
 ----------------------------------
 
 Site-occupancy models (MacKenzie et al., 2002, *aka* zero inflated binomial (ZIB) models) for presence-absence data and Nmixture models (Royle, 2004) or zero inflated Poisson (ZIP) models for abundance data (Flores et al., 2009), were developed to solve the problems created by imperfect detection.
+
+* * * * *
 
 Example application
 ===================
@@ -50,46 +56,67 @@ library(raster)
 library(maptools)
 library(dplyr)
 
-library(coda)
-library(doParallel)
+library(RCurl)  # Downloading from DropBox
+
+library(coda)  # Summarizing model output
+
+library(doParallel)  #running models in parallel
 ncores=2  # number of processor cores you would like to use
 registerDoParallel(ncores)
 
 ## set light theme for ggplot
-theme_set(theme_light())
+theme_set(theme_light()+
+            theme(text=element_text(size = 38)))
 ```
 
-Select Species
---------------
+If you don't have the packages above, install them in the package manager or by running `install.packages("doParallel")`.
 
-For this example we'll work with the Montane Woodcreeper (*Lepidocolaptes lacrymiger*).
+* * * * *
 
-![Lepidocolaptes\_lacrymiger Photo](../assets/Lepidocolaptes_lacrymiger.jpg) <span style="color:grey; font-size:1em;">Figure from [here](http://www.hbw.com/species/montane-woodcreeper-lepidocolaptes-lacrymiger) </span>
+Example Species: *Montane Woodcreeper* (*Lepidocolaptes lacrymiger*)
+--------------------------------------------------------------------
+
+![Lepidocolaptes\_lacrymiger Photo](../assets/Lepidocolaptes_lacrymiger.jpg) <br><span style="color:grey; font-size:1em;">Figure from [hbw.com](http://www.hbw.com/species/montane-woodcreeper-lepidocolaptes-lacrymiger) </span>
+
+> This species has a large range, occurring from the coastal cordillera of Venezuela along the Andes south to south-east Peru and central Bolivia. [birdlife.org](http://www.birdlife.org/datazone/speciesfactsheet.php?id=31946)
 
 ``` {.r}
 sp="Lepidocolaptes_lacrymiger"
-
-## set path to data folder
-datadir=paste0("../data/",sp,"/")
 ```
 
-Species 'expert range' via MOL.
--------------------------------
+Data Directory
+--------------
+
+The script below will download data to the directory specified below. Feel free to change it as desired.
 
 ``` {.r}
-download.file(paste0("http://mol.cartodb.com/api/v2/sql?",
-                     "q=SELECT%20ST_TRANSFORM(the_geom_webmercator,4326)%20as%20the_geom,%20seasonality%20FROM%20",
-                     "get_tile('jetz','range','",
-                     paste(strsplit(sp,"_")[[1]],collapse="%20"),
-                     "','jetz_maps')&format=shp&filename=expert"),
-              destfile=paste0(datadir,"expert.zip"))
-unzip(paste0(datadir,"expert.zip"),exdir=datadir)
+## set path to data folder
+datadir=paste0("../data/",sp,"/")
+if(!file.exists(datadir)) dir.create(datadir,recursive = T)
 ```
+
+Extract species 'expert range' via MOL.
+---------------------------------------
+
+``` {.r}
+fExpertRange=paste0(datadir,"/",sp,".shp")
+if(!file.exists(fExpertRange)){
+  download.file(paste0("http://mol.cartodb.com/api/v2/sql?",
+                     "q=SELECT%20ST_TRANSFORM(the_geom_webmercator,4326)%20as%20the_geom,",
+                     "%20seasonality%20FROM%20get_tile('jetz','range','",
+                     paste(strsplit(sp,"_")[[1]],collapse="%20"),
+                     "','jetz_maps')&format=shp&filename=",sp),
+              destfile=sub("shp","zip",fExpertRange))
+  unzip(sub("shp","zip",fExpertRange),exdir=datadir)
+}
+```
+
+> Full documentation and release of the MOL API in the works.
 
 Load the expert range.
 
 ``` {.r}
-reg=readShapePoly(paste0(datadir,"expert.shp"))
+reg=readShapePoly(fExpertRange)
 ## extract bounding box of Expert Range
 ereg=extent(reg)
 ## adjust bbox if desired
@@ -100,93 +127,54 @@ Query eBird data contained in MOL
 ---------------------------------
 
 -   Find all observations of our species
--   Find all unique eBird observation locations
--   Within bounding box of expert range
--   Observer indicated that they recorded all observed species (`all_species_reported='t'`)
--   Do not correspond to an observation of our species
+-   Find all unique observation locations for any species limited to bounding box of expert range
+-   Filter to where observer indicated recording all observed species (`all_species_reported='t'`)
+-   Filter to lists that do not correspond to an observation of our species
 
-> Discuss future availability of tools like this in MOL
+> The best method for selecting data to use for *non-detections* is very case and dataset specific.
 
 Metadata for eBird[1] is [available here](http://ebirddata.ornith.cornell.edu/downloads/erd/ebird_all_species/erd_western_hemisphere_data_grouped_by_year_v5.0.tar.gz)
 
-Below is an R function that queries the eBird data and summarized as bulleted above. This database is not currently publically accessible, so we're providing the summarized data below.
+Download species occurrence data
+--------------------------------
+
+In this example we'll use data that has been precompiled using the criteria above. If you'd like to see how we compiled these data, [see here](https://github.com/adammwilson/hSDM_Tutorial/blob/master/R/hSDM_DataPrep.md)
+
+We've made this exampled dataset available *via* the DropBox links below. If you have the `RCurl` package installed, the following commands should run. If these do not work, [you can also download these datasets from here](https://www.dropbox.com/sh/2q0k7qn5rxz0bis/AAB42fVn-s4Teqynrs6rgzR3a?dl=0).
 
 ``` {.r}
-# install_github("pingles/redshift-r")
-getebird=function(con, sptaxon, nulltaxon=NULL,region){
-  print(paste("Extracting data, this can take a few minutes..."))
-  if(!is.null(nulltaxon)){  #return only species in list as 'non-detection'
-    dbGetQuery(conn, 
-               paste(   
-                 "WITH ebird_subset as (SELECT all_species_reported,taxonomic_order,latitude,longitude,observation_date,sampling_event_identifier,group_identifier,effort_distance_km,effort_area_ha,duration_minutes",
-                 "FROM ebird",
-                 "WHERE latitude BETWEEN ",paste(bbox(region)["y",],collapse=" AND "),
-                 "AND longitude BETWEEN ",paste(bbox(region)["x",],collapse=" AND "),
-                 "AND floor(taxonomic_order) IN (",paste(c(sptaxon,nulltaxon),collapse=","),")),",
-                 "presence as (SELECT DISTINCT latitude,longitude,observation_date,sampling_event_identifier,group_identifier,effort_distance_km,effort_area_ha,duration_minutes,1 AS presence ",
-                 "FROM ebird_subset",
-                 "WHERE floor(taxonomic_order) IN (",paste(sptaxon,collapse=","),")),",
-                 "absence as (SELECT DISTINCT latitude,longitude,observation_date,sampling_event_identifier,group_identifier,effort_distance_km,effort_area_ha,duration_minutes,0 AS presence",
-                 "FROM ebird_subset",
-                 "WHERE all_species_reported='t'",
-                 "AND sampling_event_identifier NOT IN (SELECT sampling_event_identifier FROM presence))",
-                 "SELECT latitude,longitude,observation_date,presence,effort_distance_km,effort_area_ha,duration_minutes FROM presence",
-                 "UNION",
-                 "SELECT latitude,longitude,observation_date,presence,effort_distance_km,effort_area_ha,duration_minutes FROM absence"))
-    }
-  if(is.null(nulltaxon)){  ## return all species as 'non-detections'
-    dbGetQuery(conn, 
-               paste(   
-                 "WITH ebird_subset as (SELECT all_species_reported,taxonomic_order,latitude,longitude,observation_date,sampling_event_identifier,group_identifier,effort_distance_km,effort_area_ha,duration_minutes",
-                 "FROM ebird",
-                 "WHERE latitude BETWEEN ",paste(bbox(region)["y",],collapse=" AND "),
-                 "AND longitude BETWEEN ",paste(bbox(region)["x",],collapse=" AND "),"),",
-                 "presence as (SELECT DISTINCT latitude,longitude,observation_date,sampling_event_identifier,group_identifier,effort_distance_km,effort_area_ha,duration_minutes,1 AS presence ",
-                 "FROM ebird_subset",
-                 "WHERE floor(taxonomic_order) IN (",paste(sptaxon,collapse=","),")),",
-                 "absence as (SELECT DISTINCT latitude,longitude,observation_date,sampling_event_identifier,group_identifier,effort_distance_km,effort_area_ha,duration_minutes,0 AS presence",
-                 "FROM ebird_subset",
-                 "WHERE all_species_reported='t'",
-                 "AND sampling_event_identifier NOT IN (SELECT sampling_event_identifier FROM presence))",
-                 "SELECT latitude,longitude,observation_date,presence,effort_distance_km,duration_minutes,effort_area_ha FROM presence",
-                 "UNION",
-                 "SELECT latitude,longitude,observation_date,presence,effort_distance_km,duration_minutes,effort_area_ha FROM absence"))
-    }
-  }
+fspData=paste0(datadir,"Lepidocolaptes_lacrymiger_points.csv")
+
+if(!file.exists(fspData)) {
+    URL <- paste0("https://www.dropbox.com/s/y9np2fdpw5lg5jw/",
+                  "Lepidocolaptes_lacrymiger_points.csv?dl=1")
+
+    download.file(URL,
+              destfile=fspData,
+              method='curl',extra='-L')
+}
+
+spd_all=read.csv(fspData)
 ```
 
-Use the `getebird()` function to query the database and return the summarized data frame.
+Check out the data structure:
 
 ``` {.r}
-## get species data
-require(redshift)
-rs_url="jdbc:postgresql://mol-points.c98tkbi1cfwj.us-east-1.redshift.amazonaws.com:5439/mol?tcpKeepAlive=true"
-
-conn <- redshift.connect(rs_url)
-
-spd_all=getebird(
-  con=conn,
-  sptaxon=sptaxon,
-  nulltaxon=NULL,
-  region=reg)
+kable(head(spd_all[,-1]))
 ```
 
-Clean up the observational data
--------------------------------
-
-Load the table created in the step above.
-
-``` {.r}
-spd_all=read.csv(paste0(datadir,sp,"_points.csv"))
-```
+|latitude|longitude|observation\_date|presence|effort\_distance\_km|duration\_minutes|effort\_area\_ha|
+|-------:|--------:|:----------------|-------:|-------------------:|----------------:|---------------:|
+|3.518712|-76.71831|1989-07-06|1|NA|NA|NA|
+|-10.553145|-75.31591|2004-05-05|1|NA|NA|NA|
+|4.647434|-75.64572|2004-04-06|1|2.000|150|NA|
+|-13.053392|-71.53610|1994-09-03|1|NA|NA|NA|
+|-16.193000|-67.88500|1999-09-23|1|1.931|390|NA|
+|8.603094|-71.24751|1985-04-18|1|16.093|420|NA|
 
 Explore observer effort: sampling duration, distance travelled, and area surveyed.
 
 ``` {.r}
-cdur=4*60
-cdis=5
-care=500
-
 ggplot(spd_all,aes(
   y=duration_minutes/60,
   x=effort_distance_km,
@@ -195,8 +183,7 @@ ggplot(spd_all,aes(
   ylab("Sampling Duration (hours)")+
   xlab("Sampling Distance (km)")+
   labs(col = "Observed\nPresence")+
-  geom_point()+scale_x_log10()+
-  geom_vline(xintercept=cdis)+geom_hline(yintercept=cdur/60)
+  geom_point()+scale_x_log10()
 ```
 
 ![](hSDM_Tutorial_files/figure-markdown_github/spdDurationPlot-1.png)
@@ -214,11 +201,18 @@ table("Duration"=!is.na(spd_all$duration_minutes),
     ##    FALSE 13280    93
     ##    TRUE   6713 26842
 
-> For this exercise, we'll simply remove points with large or unknown spatial uncertainty.
+> For this exercise, we'll simply remove points with large or unknown spatial uncertainty. Incorporating this spatial uncertainty into distribution models is an active area of research.
+
+Filter the data below thresholds specified above.
 
 ``` {.r}
-spd=filter(spd_all,duration_minutes<=cdur&
-             (effort_distance_km<=cdis|effort_area_ha<=care))
+cdur=4*60  # Duration in minutes
+cdis=5     # Distance in km
+care=500   # Area in Hectares
+
+spd=filter(spd_all,
+           duration_minutes<=cdur&
+          (effort_distance_km<=cdis|effort_area_ha<=care))
 ```
 
 Convert to a spatialDataFrame to faciliate linking with georeferenced environmental data.
@@ -229,15 +223,15 @@ projection(spd)="+proj=longlat +datum=WGS84 +ellps=WGS84"
 spd@data[,c("lon","lat")]=coordinates(spd)  
 ```
 
-### Load coastline for plotting
+### Load coastline from maptools packge for plotting.
 
 ``` {.r}
 coast <- map_data("world",
                   xlim=c(ereg@xmin-1,ereg@xmax+1),
                   ylim=c(ereg@ymin-1,ereg@ymax+1))
-ggcoast=geom_path(data=coast,aes(x=long,y=lat,group = group),lwd=.2)
+ggcoast=geom_path(data=coast,aes(x=long,y=lat,group = group),lwd=.1)
 
-## set plotting limits
+## set plotting limits using expert range above
 gx=xlim(ereg@xmin-1,ereg@xmax+1)
 gy=ylim(ereg@ymin-1,ereg@ymax+1)
 ```
@@ -248,35 +242,80 @@ Available Species Data
 ``` {.r}
 ggplot(spd@data,aes(y=lat,x=lon))+
   geom_path(data=fortify(reg),aes(y=lat,x=long,group=piece),fill="green",col="green")+
-  geom_point(aes(colour=as.factor(presence),order=as.factor(presence)))+
+  geom_point(aes(colour=presence>=1,order=as.factor(presence)))+
   ggcoast+gx+gy+ylab("Latitude")+xlab("Longitude")+
-  labs(col = "Observed\nPresence")
+  labs(col = "Species\nObserved")+
+  coord_equal()
 ```
-
-    ## Regions defined for each Polygons
 
 ![](hSDM_Tutorial_files/figure-markdown_github/spdPlot-1.png)
 
-### Load Environmental Data
+* * * * *
+
+Environmental Data
+------------------
+
+We've also pre-compiled environmental data for the region and made it available on dropbox
+
+-   PPTJAN: Mean January Precipitation (mm, WorldClim)
+-   PPTJUL: Mean January Precipitation (mm, WorldClim)
+-   PPTSEAS: Precipitation Seasonality (WorldClim)
+-   MAT: Mean Annual Temperature (C, WorldClim)
+-   ALT: Elevation (m, WorldClim)
+-   CLDJAN: Mean January Cloud Frequency (1000s %, Wilson&Jetz)
+-   CLDJUL: Mean July Cloud Frequency (1000s %, Wilson&Jetz)
+-   CLDSEAS: Cloud Seasonality (1000s %, Wilson&Jetz)
+
+Download a single geotif with 8 bands corresponding to the data above.
 
 ``` {.r}
+fenvdata="data/Lepidocolaptes_lacrymiger.tif"
+
+if(!file.exists(fenvdata)) {
+    URL <- paste0("https://www.dropbox.com/s/1vjw848ehyzybl1/",
+              "Lepidocolaptes_lacrymiger_env.tif?dl=1")
+
+    download.file(URL,
+              destfile=fenvdata,
+              method='curl',extra='-L')
+}
+
 env=stack(paste0(datadir,sp,"env.tif"))
 names(env)=c("PPTJAN","PPTJUL","PPTSEAS","MAT","ALT","CLDJAN","CLDJUL","CLDSEAS")
 ```
 
-Scale environmental data
-------------------------
+### Scale environmental data
 
-Scaling covariate data results in standardized parameter values and also can speed up modeling convergence. It's possible to *unscale* the results later if desired.
+Scaling covariate data[2] results in standardized parameter values and also can speed up modeling convergence. It's possible to *unscale* the results later if desired.
 
 ``` {.r}
-cmeans=cellStats(env,"mean")
-csd=cellStats(env,"sd")
-## Create a 'scaled' version for modelling
+## Create a 'scaled' version for modeling
 senv=raster::scale(env)
 ```
 
-### Intersect Environmental data
+### Visualize the environmental data
+
+``` {.r}
+## Environmental data
+gplot(senv)+
+  geom_raster(aes(fill=value)) + 
+  facet_wrap(~variable,nrow=2) +
+  scale_fill_gradientn(colours=c('blue','white','red','darkred'),breaks=c(-3,0,3,6),na.value="transparent")+
+  ylab("")+xlab("")+labs(fill = "Standardized\nValue")+
+  ggcoast+gx+gy
+```
+
+![](hSDM_Tutorial_files/figure-markdown_github/plotEnv-1.png) \#\#\# Covariate correlation Scatterplot matrix of the available environmental data.
+
+``` {.r}
+splom(senv,varname.cex=2)
+```
+
+![](hSDM_Tutorial_files/figure-markdown_github/envCor-1.png)
+
+### Generate `data.frame` for model fitting
+
+First we need to 'grid' the point-level species observations to match the environmental data.
 
 ``` {.r}
 ## add cell id to facilitate linking points to raster
@@ -289,33 +328,7 @@ presences=rasterize(spd,env,fun="sum",field="presence",background=0)
 trials=rasterize(spd,env,fun="count",field="presence",background=0)
 ```
 
-``` {.r}
-## Environmental data
-gplot(senv,maxpixels=1e4)+
-  geom_raster(aes(fill=value)) + 
-  facet_wrap(~variable,nrow=2) +
-  scale_fill_gradientn(colours=c('blue','white','red'),breaks=c(-3,0,3,6),na.value="transparent")+
-  ylab("")+xlab("")+labs(fill = "Standardized\nValue")+
-  ggcoast+gx+gy
-```
-
-![](hSDM_Tutorial_files/figure-markdown_github/plotEnv-1.png) \#\# Covariate correlation
-
-``` {.r}
-tcor=layerStats(senv, "pearson",asSample=F, na.rm=T)
-kable(tcor[[1]])
-```
-
-||PPTJAN|PPTJUL|PPTSEAS|MAT|ALT|CLDJAN|CLDJUL|CLDSEAS|
-|---|-----:|-----:|------:|--:|--:|-----:|-----:|------:|
-|PPTJAN|0.9999998|-0.2691580|-0.3702433|0.1596282|-0.1920276|0.4183881|-0.1537030|0.0660666|
-|PPTJUL|-0.2691580|0.9999998|-0.3508095|0.4046315|-0.3651638|-0.1971537|0.5655739|-0.5360878|
-|PPTSEAS|-0.3702433|-0.3508095|0.9999998|-0.3956673|0.3806978|-0.1973561|-0.5168914|0.5564869|
-|MAT|0.1596282|0.4046315|-0.3956673|0.9999998|-0.9842515|-0.1506436|0.3219791|-0.3187198|
-|ALT|-0.1920276|-0.3651638|0.3806978|-0.9842515|0.9999998|0.1498754|-0.2819983|0.3045607|
-|CLDJAN|0.4183881|-0.1971537|-0.1973561|-0.1506436|0.1498754|0.9999999|-0.1512874|-0.4443342|
-|CLDJUL|-0.1537030|0.5655739|-0.5168914|0.3219791|-0.2819983|-0.1512874|0.9999999|-0.3576120|
-|CLDSEAS|0.0660666|-0.5360878|0.5564869|-0.3187198|0.3045607|-0.4443342|-0.3576120|0.9999999|
+Then transform the full gridded dataset into a point-level dataset with the number of `trials`, `presences` and associated environmental data.
 
 ``` {.r}
 data=cbind.data.frame(
@@ -325,7 +338,7 @@ data=cbind.data.frame(
   cell=values(cell),
   values(senv))
 
-## omit rows with missing data
+## omit rows with missing data (primarily ocean pixels)
 data=na.omit(data)
 
 kable(head(data))
@@ -342,15 +355,16 @@ kable(head(data))
 
 ### Select data for fitting
 
-Due to opportunistic observations, there are a few sites with more presences than trials. Let's remove:
+Create 'fitting' dataset limited to locations with at least one `trial`.
 
 ``` {.r}
-data$fit=ifelse(
-  data$trials>0 & data$trials>=data$presences,
-  1,0)
-## create 'fitting' dataset where there are observations
-fdata=data[data$fit>0,]
+fdata=data[data$trials>0,]
 ```
+
+Model Comparison
+----------------
+
+Let's compare two models, one using interpolated precipitation and the other using satellite-derived cloud data.
 
 ``` {.r}
 # Set number of chains to fit.
@@ -369,33 +383,58 @@ kable(mods)
 |m1|\~PPTJAN+PPTJUL+PPTSEAS+MAT|Precipitation|
 |m2|\~CLDJAN+CLDJUL+CLDSEAS+MAT|Cloud|
 
+Specify model run-lengths.
+
 ``` {.r}
 burnin=1000
 mcmc=1000
 thin=1
 ```
 
+Fit the models
+--------------
+
+Both site-occupancy or ZIB models (with `hSDM.siteocc()` or `hSDM.ZIB()` functions respectively) can be used to model the presence-absence of a species taking into account imperfect detection.
+
+The site-occupancy model can be used in all cases but can be less convenient and slower to fit when the repeated visits at each site are made under the exact same observation conditions. In this particular case, a Binomial distribution can be used for the observation process and we suggest the use of a ZIB model for computational efficiency (see example in hSDM Vignette Section 4.3).
+
+### `hSDM.ZIB`
+
+The model integrates two processes, an ecological process associated to the presence or absence of the species due to habitat suitability and an observation process that takes into account the fact that the probability of detection of the species is inferior to one.
+
+**Ecological process:**
+
+\(z_i ∼ Bernoulli(\theta_i)\)
+
+\(logit(\theta_i) = X_i|Beta\)
+
+**Observation process:**
+
+\(y_i ∼ Binomial(z_i ∗ \Delta_i, t_i)\)
+
+\(logit(\Delta_i) = W_i\gamma\)
+
 ``` {.r}
 results=foreach(m=1:nrow(mods)) %dopar% { 
   ## if foreach/doParallel are not installed, you can use this line instead
   # for(m in 1:nrow(mods)) { 
   tres=hSDM.ZIB(
-    suitability=as.character(mods$formula[m]),
-    presences=fdata$presences,
-    observability=~1,
-    mugamma=0, Vgamma=1.0E6,
-    gamma.start=0,
-    trials=fdata$trials,
-    data=fdata,
-    burnin=burnin, mcmc=mcmc, thin=thin,
-    beta.start=0,
-    suitability.pred=data,
-    mubeta=0, Vbeta=1.0E6,
-    save.p=0,
-    verbose=1,
-    seed=round(runif(1,0,1e6)))
-  tres$model=mods$formula[m]
-  tres$modelname=mods$name[m]
+    suitability=as.character(mods$formula[m]),  #Formula for suitability
+    presences=fdata$presences,    # Number of Observed Presences
+    observability=~1,             # Formula for p(observation|presence)
+    trials=fdata$trials,          # Number of Trials
+    data=fdata,                   # Covariates for fitting model
+    suitability.pred=data,        # Covariates for prediction 
+    mugamma=0, Vgamma=1.0E6,      # Priors on Gamma
+    gamma.start=0,                # Gamma initial Value
+    burnin=burnin, mcmc=mcmc, thin=thin,  # MCMC parameters
+    beta.start=0,                 # Initial values for betas
+    mubeta=0, Vbeta=1.0E6,        # Priors on Beta
+    save.p=0,                     # Don't save full posterior on p
+    verbose=1,                    # Report progress
+    seed=round(runif(1,0,1e6)))   # Random seed
+  tres$model=mods$formula[m]      # Add model formula to result
+  tres$modelname=mods$name[m]     # Add model name to result
   return(tres)
   }
 ```
@@ -414,23 +453,37 @@ params=foreach(r1=results,.combine=rbind.data.frame)%do% {
              RejectionRate=rejectionRate(r1$mcmc))}
 
 ## plot it
-params2=params[!grepl("Deviance*",rownames(params)),]
-ggplot(params2,aes(x=mean,y=parameter,colour=model))+
+ggplot(params[!grepl("Deviance*",rownames(params)),],
+       aes(x=mean,y=parameter,colour=model))+
   geom_point()+
   geom_errorbarh(aes(xmin=lower,xmax=upper,height=.1))
 ```
 
-![](hSDM_Tutorial_files/figure-markdown_github/unnamed-chunk-7-1.png)
+![](hSDM_Tutorial_files/figure-markdown_github/SummarizePosteriors-1.png)
+
+### Detection probability
+
+``` {.r}
+pDetect <-   params[params$parameter=="gamma.(Intercept)",c("model","mean")]
+pDetect$delta.est <- inv.logit(pDetect$mean)
+colnames(pDetect)[2]="gamma.hat"
+kable(pDetect)
+```
+
+||model|gamma.hat|delta.est|
+|---|:----|--------:|--------:|
+|gamma.(Intercept)|\~PPTJAN+PPTJUL+PPTSEAS+MAT|-1.318373|0.2110890|
+|gamma.(Intercept)1|\~CLDJAN+CLDJUL+CLDSEAS+MAT|-1.271755|0.2189569|
 
 Predictions for each cell
 -------------------------
 
 ``` {.r}
-pred=foreach(r1=results,.combine=stack)%do% {
+pred=foreach(r1=results,.combine=stack)%dopar% {
   tr=rasterFromXYZ(cbind(x=data$x,
                          y=data$y,
                          pred=r1$prob.p.pred))
-  names(tr)=r1$model    
+  names(tr)=r1$modelname    
   return(tr)
   }
 ```
@@ -443,10 +496,23 @@ predscale=scale_fill_gradientn(values=c(0,.5,1),colours=c('white','darkgreen','g
 gplot(pred)+geom_raster(aes(fill=value)) +
   facet_wrap(~ variable) +
   predscale+
+  coord_equal()+
+  geom_path(data=fortify(reg),
+            aes(y=lat,x=long,group=piece),fill="red",col="red")+
+  ggcoast+gx+gy+ylab("Latitude")+xlab("Longitude")+
+  labs(col = "p(presence)")+
   coord_equal()
 ```
 
 ![](hSDM_Tutorial_files/figure-markdown_github/plotmodel-1.png)
+
+Additional Features
+-------------------
+
+### `*.icar`
+
+The `*.icar` functions in `hSDM` add *spatial effects* to the model as well, accounting for spatial autocorrelation of species occurrence.
+\#\#\# hSDM.siteocc
 
 Summary
 -------
@@ -456,4 +522,14 @@ In this session, we illustrated:
 -   Used opportunistic species occurrence data and `hSDM` to fit an occupancy model
 -   Compared output from models built with interpolated and satellite-derived environmental data
 
+Looking forward
+---------------
+
+-   Incorporate multiple scales of observations (e.g. points & polygons)
+-   Account directly for spatial uncertainties in point observations
+-   Time-varying covariates with `hSDM.siteocc` or similar
+-   
+
 [1] M. Arthur Munson, Kevin Webb, Daniel Sheldon, Daniel Fink, Wesley M. Hochachka, Marshall Iliff, Mirek Riedewald, Daria Sorokina, Brian Sullivan, Christopher Wood, and Steve Kelling. The eBird Reference Dataset, Version 5.0. Cornell Lab of Ornithology and National Audubon Society, Ithaca, NY, January 2013.
+
+[2] subtract the mean and divide by the standard deviation
