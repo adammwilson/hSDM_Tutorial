@@ -16,12 +16,14 @@ This script is available:
 -   [HTML format with images/plots](https://rawgit.com/adammwilson/hSDM_Tutorial/master/R/hSDM_Tutorial.html)
 -   [Plain text (.R) with commented text](https://raw.githubusercontent.com/adammwilson/hSDM_Tutorial/master/R/hSDM_Tutorial.R)
 
+The data used below are available in a [public dropbox folder](https://www.dropbox.com/sh/2q0k7qn5rxz0bis/AAB42fVn-s4Teqynrs6rgzR3a?dl=0), though they will be downloaded using code below.
+
 Species Distribution Modeling
 =============================
 
 Two major problems which can bias model results:
 
-1.  imperfect (and spatially biased) detections
+1.  imperfect detections ("false absences")
 2.  spatial correlation of the observations.
 
 hSDM R Package
@@ -32,6 +34,8 @@ Developed by [Ghislain Vieilledent](mailto:ghislain.vieilledent@cirad.fr) with C
 -   User-friendly statistical functions to overcome limitations above.
 -   Developed in a hierarchical Bayesian framework.
 -   Call a Metropolis-within-Gibbs algorithm (coded in C) to estimate model parameters and drastically the computation time compared to other methods (e.g. \~2-10x faster than OpenBUGS).
+
+### Software for modeling species distribution including imperfect detection.
 
 ![hSDM](../assets/DetectionMods.png)
 
@@ -80,6 +84,10 @@ Example Species: *Montane Woodcreeper* (*Lepidocolaptes lacrymiger*)
 
 > This species has a large range, occurring from the coastal cordillera of Venezuela along the Andes south to south-east Peru and central Bolivia. [birdlife.org](http://www.birdlife.org/datazone/speciesfactsheet.php?id=31946)
 
+![Lepidocolaptes\_lacrymiger Data](../assets/Lepidocolaptes_lacrymiger_range.png) <br><span style="color:grey; font-size:1em;">Data via [MOL.org](http://map.mol.org/maps/Lepidocolaptes%20lacrymiger) </span>
+
+Set species name:
+
 ``` {.r}
 sp="Lepidocolaptes_lacrymiger"
 ```
@@ -113,7 +121,7 @@ if(!file.exists(fExpertRange)){
 
 > Full documentation and release of the MOL API in the works.
 
-Load the expert range.
+Load the expert range from the downloaded shapefile.
 
 ``` {.r}
 reg=readShapePoly(fExpertRange)
@@ -135,10 +143,10 @@ Query eBird data contained in MOL
 
 Metadata for eBird[1] is [available here](http://ebirddata.ornith.cornell.edu/downloads/erd/ebird_all_species/erd_western_hemisphere_data_grouped_by_year_v5.0.tar.gz)
 
+For this example we'll use data that has been precompiled using the criteria above. If you'd like to see how we compiled these data, [see here](https://github.com/adammwilson/hSDM_Tutorial/blob/master/R/hSDM_DataPrep.md)
+
 Download species occurrence data
 --------------------------------
-
-In this example we'll use data that has been precompiled using the criteria above. If you'd like to see how we compiled these data, [see here](https://github.com/adammwilson/hSDM_Tutorial/blob/master/R/hSDM_DataPrep.md)
 
 We've made this exampled dataset available *via* the DropBox links below. If you have the `RCurl` package installed, the following commands should run. If these do not work, [you can also download these datasets from here](https://www.dropbox.com/sh/2q0k7qn5rxz0bis/AAB42fVn-s4Teqynrs6rgzR3a?dl=0).
 
@@ -223,7 +231,7 @@ projection(spd)="+proj=longlat +datum=WGS84 +ellps=WGS84"
 spd@data[,c("lon","lat")]=coordinates(spd)  
 ```
 
-### Load coastline from maptools packge for plotting.
+### Load coastline from maptools package for plotting.
 
 ``` {.r}
 coast <- map_data("world",
@@ -255,16 +263,16 @@ ggplot(spd@data,aes(y=lat,x=lon))+
 Environmental Data
 ------------------
 
-We've also pre-compiled environmental data for the region and made it available on dropbox
+We've also pre-compiled environmental data for the region and made it available in the shared DropBox folder.
 
--   PPTJAN: Mean January Precipitation (mm, WorldClim)
--   PPTJUL: Mean January Precipitation (mm, WorldClim)
--   PPTSEAS: Precipitation Seasonality (WorldClim)
--   MAT: Mean Annual Temperature (C, WorldClim)
--   ALT: Elevation (m, WorldClim)
--   CLDJAN: Mean January Cloud Frequency (1000s %, Wilson&Jetz)
--   CLDJUL: Mean July Cloud Frequency (1000s %, Wilson&Jetz)
--   CLDSEAS: Cloud Seasonality (1000s %, Wilson&Jetz)
+-   **PPTJAN**: Mean January Precipitation (mm, WorldClim)
+-   **PPTJUL**: Mean January Precipitation (mm, WorldClim)
+-   **PPTSEAS**: Precipitation Seasonality (WorldClim)
+-   **MAT**: Mean Annual Temperature (C, WorldClim)
+-   **ALT**: Elevation (m, WorldClim)
+-   **CLDJAN**: Mean January Cloud Frequency (1000s %, Wilson&Jetz)
+-   **CLDJUL**: Mean July Cloud Frequency (1000s %, Wilson&Jetz)
+-   **CLDSEAS**: Cloud Seasonality (1000s %, Wilson&Jetz)
 
 Download a single geotif with 8 bands corresponding to the data above.
 
@@ -396,7 +404,7 @@ Fit the models
 
 Both site-occupancy or ZIB models (with `hSDM.siteocc()` or `hSDM.ZIB()` functions respectively) can be used to model the presence-absence of a species taking into account imperfect detection.
 
-The site-occupancy model can be used in all cases but can be less convenient and slower to fit when the repeated visits at each site are made under the exact same observation conditions. In this particular case, a Binomial distribution can be used for the observation process and we suggest the use of a ZIB model for computational efficiency (see example in hSDM Vignette Section 4.3).
+The site-occupancy model can be used in all cases but can be less convenient and slower to fit when the repeated visits at each site are made under the same observation conditions. While this is likely not true in this situation (the observations occurred in different years, etc.), we'll use the simpler model today. For more information about the differences, see the hSDM Vignette Section 4.3.
 
 ### `hSDM.ZIB`
 
@@ -404,15 +412,11 @@ The model integrates two processes, an ecological process associated to the pres
 
 **Ecological process:**
 
-\(z_i ∼ Bernoulli(\theta_i)\)
-
-\(logit(\theta_i) = X_i|Beta\)
+[[ ../assets/M1.png | height = 100px ]]
 
 **Observation process:**
 
-\(y_i ∼ Binomial(z_i ∗ \Delta_i, t_i)\)
-
-\(logit(\Delta_i) = W_i\gamma\)
+![](../assets/M2.png)
 
 ``` {.r}
 results=foreach(m=1:nrow(mods)) %dopar% { 
