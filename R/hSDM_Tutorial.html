@@ -905,8 +905,10 @@ document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'">'+'Ghislain Vieilledent'+'<\/
 <li>Developed in a hierarchical Bayesian framework.</li>
 <li>Call a Metropolis-within-Gibbs algorithm (coded in C) to estimate model parameters and drastically the computation time compared to other methods (e.g. ~2-10x faster than OpenBUGS).</li>
 </ul>
+<p><img src="../assets/DetectionMods.png" alt="hSDM" /></p>
 <h2 id="the-problem-of-imperfect-detection">The problem of imperfect detection</h2>
 <p>Site-occupancy models (MacKenzie et al., 2002, <em>aka</em> zero inflated binomial (ZIB) models) for presence-absence data and Nmixture models (Royle, 2004) or zero inflated Poisson (ZIP) models for abundance data (Flores et al., 2009), were developed to solve the problems created by imperfect detection.</p>
+<hr />
 <h1 id="example-application">Example application</h1>
 <h2 id="load-libraries">Load libraries</h2>
 <div class="row">
@@ -992,7 +994,7 @@ ereg@xmin=-81.4</code></pre>
 </blockquote>
 <p>Metadata for eBird<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> is <a href="http://ebirddata.ornith.cornell.edu/downloads/erd/ebird_all_species/erd_western_hemisphere_data_grouped_by_year_v5.0.tar.gz">available here</a></p>
 <h2 id="download-species-occurrence-data">Download species occurrence data</h2>
-<p>In this example we'll use data that has been precompiled using the criteria above. If you'd like to see how we compiled these data, <a href="https://github.com/adammwilson/hSDM_DataPrep.html">see here</a></p>
+<p>In this example we'll use data that has been precompiled using the criteria above. If you'd like to see how we compiled these data, <a href="https://github.com/adammwilson/hSDM_Tutorial/blob/master/R/hSDM_DataPrep.md">see here</a></p>
 <p>We've made this exampled dataset available <em>via</em> the DropBox links below. If you have the <code>RCurl</code> package installed, the following commands should run. If these do not work, <a href="https://www.dropbox.com/sh/2q0k7qn5rxz0bis/AAB42fVn-s4Teqynrs6rgzR3a?dl=0">you can also download these datasets from here</a>.</p>
 <div class="row">
 <button class="source R toggle btn btn-xs btn-primary">

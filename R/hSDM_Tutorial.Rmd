@@ -24,7 +24,7 @@ opts_chunk$set(cache=TRUE,
                fig.height=12)
 
 # purl("R/hSDM_Tutorial.Rmd","R/hSDM_Tutorial.R",documentation=2)
-# rmarkdown::render("R/hSDM_Tutorial.Rmd", "all")
+# rmarkdown::render("R/hSDM_Tutorial.Rmd", "html")
 
 ```
 # Introduction to hSDM
@@ -60,10 +60,13 @@ Developed by [Ghislain Vieilledent](mailto:ghislain.vieilledent@cirad.fr) with C
 * Developed in a hierarchical Bayesian framework. 
 * Call a Metropolis-within-Gibbs algorithm (coded in C) to estimate model parameters and drastically the computation time compared to other methods (e.g. ~2-10x faster than OpenBUGS).
 
+![hSDM](../assets/DetectionMods.png)
+
 ## The problem of imperfect detection
 
 Site-occupancy models (MacKenzie et al., 2002, _aka_ zero inflated binomial (ZIB) models) for presence-absence data and Nmixture models (Royle, 2004) or zero inflated Poisson (ZIP) models for abundance data (Flores et al., 2009), were developed to solve the problems created by imperfect detection.
 
+_________________
 
 # Example application
 
@@ -155,7 +158,7 @@ Metadata for eBird^[M. Arthur Munson, Kevin Webb, Daniel Sheldon, Daniel Fink, W
 
 ## Download species occurrence data
 
-In this example we'll use data that has been precompiled using the criteria above. If you'd like to see how we compiled these data, [see here](https://github.com/adammwilson/hSDM_DataPrep.html)
+In this example we'll use data that has been precompiled using the criteria above. If you'd like to see how we compiled these data, [see here](https://github.com/adammwilson/hSDM_Tutorial/blob/master/R/hSDM_DataPrep.md)
 
 We've made this exampled dataset available _via_ the DropBox links below.  If you have the `RCurl` package installed, the following commands should run. If these do not work, [you can also download these datasets from here](https://www.dropbox.com/sh/2q0k7qn5rxz0bis/AAB42fVn-s4Teqynrs6rgzR3a?dl=0).
 
