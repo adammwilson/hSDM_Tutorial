@@ -1,35 +1,10 @@
----
-title: "Overview of hSDM"
-author: "Adam M. Wilson"
-date: "January 6, 2015"
-output:
-  knitrBootstrap::bootstrap_document:
-    highlight: Magula
-    highlight.chooser: no
-    theme: cerulean
-    theme.chooser: no
-  md_document:
-    variant: markdown_github
----
+Data Preparation for hSDM tutorial
+==================================
 
-```{r, echo=FALSE, warning=FALSE}
-library(knitr)
-library(rmarkdown)
+Load libraries
+--------------
 
-opts_chunk$set(cache=TRUE,
-               root.dir="/Users/adamw/repos/hSDM_Tutorial",
-               warning=FALSE,
-               message=F,
-               fig.width=15,fig.height=15)
-
-# rmarkdown::render("R/hSDM_DataPrep.Rmd", "all")
-
-```
-# Data Preparation for hSDM tutorial
-
-
-## Load libraries
-```{r loadLibraries,message=FALSE,warning=FALSE}
+``` {.r}
 library(hSDM)
 library(ggplot2)
 library(rasterVis)
@@ -38,39 +13,37 @@ library(maptools)
 library(dplyr)
 ```
 
+* * * * *
 
-__________
+Example Species: *Montane Woodcreeper* (*Lepidocolaptes lacrymiger*)
+--------------------------------------------------------------------
 
-## Example Species: *Montane Woodcreeper* (_Lepidocolaptes lacrymiger_)
-
-![Lepidocolaptes_lacrymiger Photo](../assets/Lepidocolaptes_lacrymiger.jpg)
-<br><span style="color:grey; font-size:1em;">Figure from [hbw.com](http://www.hbw.com/species/montane-woodcreeper-lepidocolaptes-lacrymiger) </span>
+![Lepidocolaptes\_lacrymiger Photo](../assets/Lepidocolaptes_lacrymiger.jpg) <br><span style="color:grey; font-size:1em;">Figure from [hbw.com](http://www.hbw.com/species/montane-woodcreeper-lepidocolaptes-lacrymiger) </span>
 
 > This species has a large range, occurring from the coastal cordillera of Venezuela along the Andes south to south-east Peru and central Bolivia. [birdlife.org](http://www.birdlife.org/datazone/speciesfactsheet.php?id=31946)
 
-```{r}
+``` {.r}
 sp="Lepidocolaptes_lacrymiger"
 
 ## set path to data folder
 datadir=paste0("../data/",sp,"/")
-
 ```
 
-## Query eBird data contained in MOL
+Query eBird data contained in MOL
+---------------------------------
 
-* Find all observations of our species
-* Find all unique observation locations for any species limited to bounding box of expert range
-* Filter to where observer indicated recording all observed species (`all_species_reported='t'`)
-* Filter to lists that do not correspond to an observation of our species
+-   Find all observations of our species
+-   Find all unique observation locations for any species limited to bounding box of expert range
+-   Filter to where observer indicated recording all observed species (`all_species_reported='t'`)
+-   Filter to lists that do not correspond to an observation of our species
 
-> The best method for selecting data to use for _non-detections_ is very case and dataset specific.
+> The best method for selecting data to use for *non-detections* is very case and dataset specific.
 
-Metadata for eBird^[M. Arthur Munson, Kevin Webb, Daniel Sheldon, Daniel Fink, Wesley M. Hochachka, Marshall Iliff, Mirek Riedewald, Daria Sorokina, Brian Sullivan, Christopher Wood, and Steve Kelling. The eBird Reference Dataset, Version 5.0. Cornell Lab of Ornithology and National Audubon Society, Ithaca, NY, January 2013.] is [available here](http://ebirddata.ornith.cornell.edu/downloads/erd/ebird_all_species/erd_western_hemisphere_data_grouped_by_year_v5.0.tar.gz)
+Metadata for eBird[1] is [available here](http://ebirddata.ornith.cornell.edu/downloads/erd/ebird_all_species/erd_western_hemisphere_data_grouped_by_year_v5.0.tar.gz)
 
-Below is an R function that queries the eBird data and summarized as bulleted above.  This database is not currently publically accessible, so we're providing the summarized data below.  
+Below is an R function that queries the eBird data and summarized as bulleted above. This database is not currently publically accessible, so we're providing the summarized data below.
 
-```{r, eval=FALSE}
-
+``` {.r}
 # install_github("pingles/redshift-r")
 getebird=function(con, sptaxon, region){
   print(paste("Extracting data, this can take a few minutes..."))
@@ -137,9 +110,9 @@ getebird=function(con, sptaxon, region){
     }
 ```
 
-
 Use the `getebird()` function to query the database and return the summarized data frame.
-```{r, eval=FALSE}
+
+``` {.r}
 ## get species data
 require(redshift)
 rs_url="jdbc:postgresql://***redshift.amazonaws.com:5439/mol?tcpKeepAlive=true"
@@ -152,5 +125,6 @@ spd_all=getebird(
   nulltaxon=NULL,
   region=reg
   )
-
 ```
+
+[1] M. Arthur Munson, Kevin Webb, Daniel Sheldon, Daniel Fink, Wesley M. Hochachka, Marshall Iliff, Mirek Riedewald, Daria Sorokina, Brian Sullivan, Christopher Wood, and Steve Kelling. The eBird Reference Dataset, Version 5.0. Cornell Lab of Ornithology and National Audubon Society, Ithaca, NY, January 2013.
