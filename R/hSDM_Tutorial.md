@@ -141,7 +141,7 @@ Query eBird data contained in MOL
 
 > The best method for selecting data to use for *non-detections* is very case and dataset specific.
 
-Metadata for eBird[1] is [available here](http://ebirddata.ornith.cornell.edu/downloads/erd/ebird_all_species/erd_western_hemisphere_data_grouped_by_year_v5.0.tar.gz)
+Metadata for eBird[1] is [available here](http://ebird.org/ebird/data/download)
 
 For this example we'll use data that has been precompiled using the criteria above. If you'd like to see how we compiled these data, [see here](https://github.com/adammwilson/hSDM_Tutorial/blob/master/R/hSDM_DataPrep.md)
 
@@ -310,7 +310,7 @@ gplot(senv)+
   facet_wrap(~variable,nrow=2) +
   scale_fill_gradientn(colours=c('blue','white','red','darkred'),breaks=c(-3,0,3,6),na.value="transparent")+
   ylab("")+xlab("")+labs(fill = "Standardized\nValue")+
-  ggcoast+gx+gy
+  ggcoast+gx+gy+coord_equal()
 ```
 
 ![](hSDM_Tutorial_files/figure-markdown_github/plotEnv-1.png) \#\#\# Covariate correlation Scatterplot matrix of the available environmental data.
@@ -361,6 +361,8 @@ kable(head(data))
 |863|-74.21250|11.22083|0|0|863|-1.415331|-0.7855689|0.9037265|0.8250522|-0.6115284|-3.126577|0.1173617|2.305759|
 |864|-74.20417|11.22083|0|0|864|-1.415331|-0.7784485|0.9037265|0.8250522|-0.6106826|-3.105004|0.2700406|2.475368|
 
+This table is similar to the data available from the "Annotate" function in MOL, with the exception that it contains the point data aggregated to the resolution of the environmental data.
+
 ### Select data for fitting
 
 Create 'fitting' dataset limited to locations with at least one `trial`.
@@ -406,17 +408,24 @@ Both site-occupancy or ZIB models (with `hSDM.siteocc()` or `hSDM.ZIB()` functio
 
 The site-occupancy model can be used in all cases but can be less convenient and slower to fit when the repeated visits at each site are made under the same observation conditions. While this is likely not true in this situation (the observations occurred in different years, etc.), we'll use the simpler model today. For more information about the differences, see the hSDM Vignette Section 4.3.
 
-### `hSDM.ZIB`
+### Example: `hSDM.ZIB`
 
-The model integrates two processes, an ecological process associated to the presence or absence of the species due to habitat suitability and an observation process that takes into account the fact that the probability of detection of the species is inferior to one.
+The model integrates two processes, an ecological process associated to the presence or absence of the species due to habitat suitability and an observation process that takes into account the fact that the probability of detection of the species is less than one.
+
+If the species has been observed at least once during multiple visits, we can assert that the habitat at this site is suitable. And the fact that the species can be unobserved at this site is only due to imperfect detection.
 
 **Ecological process:**
 
-[[ ../assets/M1.png | height = 100px ]]
+![](../assets/M1.png)
 
 **Observation process:**
 
 ![](../assets/M2.png)
+
+In this example we'll assume a spatially constant p(observation|presence), but it's also possible to put in covariates for this parameter.
+
+Run the model
+-------------
 
 ``` {.r}
 results=foreach(m=1:nrow(mods)) %dopar% { 
@@ -446,9 +455,12 @@ results=foreach(m=1:nrow(mods)) %dopar% {
 Summarize posterior parameters
 ------------------------------
 
+The model returns full posterior distributions for all model parameters. To summarize them you need to choose your summary metric (e.g. mean/median/quantiles).
+
 ``` {.r}
 params=foreach(r1=results,.combine=rbind.data.frame)%do% {
   data.frame(model=r1$model,
+             modelname=r1$modelname,
              parameter=colnames(r1$mcmc),
              mean=summary(r1$mcmc)$statistics[,"Mean"],
              sd=summary(r1$mcmc)$statistics[,"SD"],
@@ -458,26 +470,32 @@ params=foreach(r1=results,.combine=rbind.data.frame)%do% {
 
 ## plot it
 ggplot(params[!grepl("Deviance*",rownames(params)),],
-       aes(x=mean,y=parameter,colour=model))+
+       aes(x=mean,y=parameter,colour=modelname))+
+  geom_errorbarh(aes(xmin=lower,xmax=upper,height=.1))+
   geom_point()+
-  geom_errorbarh(aes(xmin=lower,xmax=upper,height=.1))
+  theme(legend.position="bottom")
 ```
 
 ![](hSDM_Tutorial_files/figure-markdown_github/SummarizePosteriors-1.png)
 
 ### Detection probability
 
+The model uses repeat obserations within cells to estimate the probabiliy observation given that the species was present.
+
 ``` {.r}
-pDetect <-   params[params$parameter=="gamma.(Intercept)",c("model","mean")]
+pDetect <-   params[params$parameter=="gamma.(Intercept)",
+                    c("modelname","mean")]
 pDetect$delta.est <- inv.logit(pDetect$mean)
 colnames(pDetect)[2]="gamma.hat"
-kable(pDetect)
+kable(pDetect,row.names=F)
 ```
 
-||model|gamma.hat|delta.est|
-|---|:----|--------:|--------:|
-|gamma.(Intercept)|\~PPTJAN+PPTJUL+PPTSEAS+MAT|-1.318373|0.2110890|
-|gamma.(Intercept)1|\~CLDJAN+CLDJUL+CLDSEAS+MAT|-1.271755|0.2189569|
+|modelname|gamma.hat|delta.est|
+|:--------|--------:|--------:|
+|Precipitation|-1.323061|0.2103095|
+|Cloud|-1.283685|0.2169236|
+
+> How does this change if you add environmental covariates to the observability regression?
 
 Predictions for each cell
 -------------------------
@@ -510,21 +528,36 @@ gplot(pred)+geom_raster(aes(fill=value)) +
 
 ![](hSDM_Tutorial_files/figure-markdown_github/plotmodel-1.png)
 
-Additional Features
--------------------
+Additional Models in hSDM
+-------------------------
 
 ### `*.icar`
 
 The `*.icar` functions in `hSDM` add *spatial effects* to the model as well, accounting for spatial autocorrelation of species occurrence.
-\#\#\# hSDM.siteocc
 
-Summary
--------
+### `hSDM.binomial` & `hSDM.binomial.iCAR`
 
-In this session, we illustrated:
+Simple and spatial binomial model (perfect detection).
 
--   Used opportunistic species occurrence data and `hSDM` to fit an occupancy model
--   Compared output from models built with interpolated and satellite-derived environmental data
+### `hSDM.ZIB` & `hSDM.ZIB.iCAR` & `hSDM.ZIB.iCAR.alteration`
+
+Zero-inflated Binomial (example we used today).
+
+### `hSDM.ZIP` & `hSDM.ZIP.iCAR` & `hSDM.ZIP.iCAR.alteration`
+
+Zero-inflated Poisson (Abundance data with imperfect detection).
+
+### `hSDM.siteocc` & `hSDM.siteocc.iCAR`
+
+Incorporates temporally varying environment to account for changing observation conditions.
+
+### `hSDM.poisson` & `hSDM.poisson.iCAR`
+
+Simple and spatial poisson model for species abundance (perfect detection).
+
+### `hSDM.Nmixture` & `hSDM.Nmixture.iCAR`
+
+Poisson model for abundance with imperfect detection.
 
 Looking forward
 ---------------
@@ -532,7 +565,6 @@ Looking forward
 -   Incorporate multiple scales of observations (e.g. points & polygons)
 -   Account directly for spatial uncertainties in point observations
 -   Time-varying covariates with `hSDM.siteocc` or similar
--   
 
 [1] M. Arthur Munson, Kevin Webb, Daniel Sheldon, Daniel Fink, Wesley M. Hochachka, Marshall Iliff, Mirek Riedewald, Daria Sorokina, Brian Sullivan, Christopher Wood, and Steve Kelling. The eBird Reference Dataset, Version 5.0. Cornell Lab of Ornithology and National Audubon Society, Ithaca, NY, January 2013.
 

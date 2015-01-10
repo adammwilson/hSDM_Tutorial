@@ -3,11 +3,6 @@
 #' author: "Adam M. Wilson"
 #' date: "January 6, 2015"
 #' output:
-#'   knitrBootstrap::bootstrap_document:
-#'     highlight: Magula
-#'     highlight.chooser: no
-#'     theme: cerulean
-#'     theme.chooser: no
 #'   md_document:
 #'     variant: markdown_github
 #' ---
@@ -21,7 +16,7 @@ opts_chunk$set(cache=TRUE,
                warning=FALSE,
                message=F,
                fig.width=12,
-               fig.height=12)
+               fig.height=15)
 
 # purl("R/hSDM_Tutorial.Rmd","R/hSDM_Tutorial.R",documentation=2)
 # rmarkdown::render("R/hSDM_Tutorial.Rmd", "all")
@@ -43,13 +38,13 @@ opts_chunk$set(cache=TRUE,
 #'   * [HTML format with images/plots](https://rawgit.com/adammwilson/hSDM_Tutorial/master/R/hSDM_Tutorial.html)
 #'   * [Plain text (.R) with commented text](https://raw.githubusercontent.com/adammwilson/hSDM_Tutorial/master/R/hSDM_Tutorial.R)
 #' 
-#' 
+#' The data used below are available in a [public dropbox folder](https://www.dropbox.com/sh/2q0k7qn5rxz0bis/AAB42fVn-s4Teqynrs6rgzR3a?dl=0), though they will be downloaded using code below.  
 #' 
 #' # Species Distribution Modeling
 #' 
 #' Two major problems which can bias model results: 
 #' 
-#' 1. imperfect (and spatially biased) detections
+#' 1. imperfect detections ("false absences")
 #' 2. spatial correlation of the observations.
 #' 
 #' ## hSDM R Package
@@ -60,10 +55,14 @@ opts_chunk$set(cache=TRUE,
 #' * Developed in a hierarchical Bayesian framework. 
 #' * Call a Metropolis-within-Gibbs algorithm (coded in C) to estimate model parameters and drastically the computation time compared to other methods (e.g. ~2-10x faster than OpenBUGS).
 #' 
+#' ### Software for modeling species distribution including imperfect detection.
+#' ![hSDM](../assets/DetectionMods.png)
+#' 
 #' ## The problem of imperfect detection
 #' 
 #' Site-occupancy models (MacKenzie et al., 2002, _aka_ zero inflated binomial (ZIB) models) for presence-absence data and Nmixture models (Royle, 2004) or zero inflated Poisson (ZIP) models for abundance data (Flores et al., 2009), were developed to solve the problems created by imperfect detection.
 #' 
+#' _________________
 #' 
 #' # Example application
 #' 
@@ -101,6 +100,11 @@ theme_set(theme_light()+
 #' 
 #' > This species has a large range, occurring from the coastal cordillera of Venezuela along the Andes south to south-east Peru and central Bolivia. [birdlife.org](http://www.birdlife.org/datazone/speciesfactsheet.php?id=31946)
 #' 
+#' ![Lepidocolaptes_lacrymiger Data](../assets/Lepidocolaptes_lacrymiger_range.png)
+#' <br><span style="color:grey; font-size:1em;">Data via [MOL.org](http://map.mol.org/maps/Lepidocolaptes%20lacrymiger) </span>
+#' 
+#' 
+#' Set species name:
 ## ------------------------------------------------------------------------
 sp="Lepidocolaptes_lacrymiger"
 
@@ -131,7 +135,7 @@ if(!file.exists(fExpertRange)){
 #' 
 #' > Full documentation and release of the MOL API in the works.
 #' 
-#' Load the expert range.
+#' Load the expert range from the downloaded shapefile.
 ## ----readRange-----------------------------------------------------------
 reg=readShapePoly(fExpertRange)
 ## extract bounding box of Expert Range
@@ -152,10 +156,9 @@ ereg@xmin=-81.4
 #' 
 #' Metadata for eBird^[M. Arthur Munson, Kevin Webb, Daniel Sheldon, Daniel Fink, Wesley M. Hochachka, Marshall Iliff, Mirek Riedewald, Daria Sorokina, Brian Sullivan, Christopher Wood, and Steve Kelling. The eBird Reference Dataset, Version 5.0. Cornell Lab of Ornithology and National Audubon Society, Ithaca, NY, January 2013.] is [available here](http://ebirddata.ornith.cornell.edu/downloads/erd/ebird_all_species/erd_western_hemisphere_data_grouped_by_year_v5.0.tar.gz)
 #' 
+#' For this example we'll use data that has been precompiled using the criteria above. If you'd like to see how we compiled these data, [see here](https://github.com/adammwilson/hSDM_Tutorial/blob/master/R/hSDM_DataPrep.md)
 #' 
 #' ## Download species occurrence data
-#' 
-#' In this example we'll use data that has been precompiled using the criteria above. If you'd like to see how we compiled these data, see here.
 #' 
 #' We've made this exampled dataset available _via_ the DropBox links below.  If you have the `RCurl` package installed, the following commands should run. If these do not work, [you can also download these datasets from here](https://www.dropbox.com/sh/2q0k7qn5rxz0bis/AAB42fVn-s4Teqynrs6rgzR3a?dl=0).
 #' 
@@ -224,7 +227,7 @@ projection(spd)="+proj=longlat +datum=WGS84 +ellps=WGS84"
 spd@data[,c("lon","lat")]=coordinates(spd)  
 
 #' 
-#' ### Load coastline from maptools packge for plotting.
+#' ### Load coastline from maptools package for plotting.
 ## ----loadCoast-----------------------------------------------------------
 coast <- map_data("world",
                   xlim=c(ereg@xmin-1,ereg@xmax+1),
@@ -252,16 +255,16 @@ ggplot(spd@data,aes(y=lat,x=lon))+
 #' 
 #' ## Environmental Data
 #' 
-#' We've also pre-compiled environmental data for the region and made it available on dropbox
+#' We've also pre-compiled environmental data for the region and made it available in the shared DropBox folder.
 #' 
-#' * PPTJAN: Mean January Precipitation (mm, WorldClim)
-#' * PPTJUL: Mean January Precipitation (mm, WorldClim)
-#' * PPTSEAS: Precipitation Seasonality (WorldClim)
-#' * MAT: Mean Annual Temperature (C, WorldClim)
-#' * ALT: Elevation (m, WorldClim)
-#' * CLDJAN:  Mean January Cloud Frequency (1000s %, Wilson&Jetz)
-#' * CLDJUL:  Mean July Cloud Frequency (1000s %, Wilson&Jetz)
-#' * CLDSEAS: Cloud Seasonality (1000s %, Wilson&Jetz)
+#' * **PPTJAN**: Mean January Precipitation (mm, WorldClim)
+#' * **PPTJUL**: Mean January Precipitation (mm, WorldClim)
+#' * **PPTSEAS**: Precipitation Seasonality (WorldClim)
+#' * **MAT**: Mean Annual Temperature (C, WorldClim)
+#' * **ALT**: Elevation (m, WorldClim)
+#' * **CLDJAN**:  Mean January Cloud Frequency (1000s %, Wilson&Jetz)
+#' * **CLDJUL**:  Mean July Cloud Frequency (1000s %, Wilson&Jetz)
+#' * **CLDSEAS**: Cloud Seasonality (1000s %, Wilson&Jetz)
 #' 
 #' Download a single geotif with 8 bands corresponding to the data above.
 ## ----loadEnv-------------------------------------------------------------
@@ -369,24 +372,22 @@ thin=1
 #' 
 #' Both site-occupancy or ZIB models (with `hSDM.siteocc()` or `hSDM.ZIB()` functions respectively) can be used to model the presence-absence of a species taking into account imperfect detection. 
 #' 
-#' The site-occupancy model can be used in all cases but can be less convenient and slower to fit when the repeated visits at each site are made under the exact same observation conditions. In this particular case, a Binomial distribution can be used for the observation process and we suggest the use of a ZIB model for computational
-#' efficiency (see example in hSDM Vignette Section 4.3).  
+#' The site-occupancy model can be used in all cases but can be less convenient and slower to fit when the repeated visits at each site are made under the same observation conditions. While this is likely not true in this situation (the observations occurred in different years, etc.), we'll use the simpler model today.  For more information about the differences, see the hSDM Vignette Section 4.3.  
 #' 
-#' ### `hSDM.ZIB`
+#' ### Example: `hSDM.ZIB`
 #' The model integrates two processes, an ecological process associated to the presence or absence of the species due to habitat suitability and an observation process that takes into account the fact that
-#' the probability of detection of the species is inferior to one.
+#' the probability of detection of the species is less than one.
+#' 
+#' If the species has been observed at least once during multiple visits, we can assert that the habitat at this site is suitable. And the fact that the species can be unobserved at this site is only due to imperfect detection.
 #' 
 #' **Ecological process:**
 #' 
-#'   $z_i ∼ Bernoulli(\theta_i)$
-#'   
-#'   $logit(\theta_i) = X_i|Beta$
+#'  ![](../assets/M1.png)
 #' 
 #' **Observation process:**
 #' 
-#'  $y_i ∼ Binomial(z_i ∗ \Delta_i, t_i)$
-#'  
-#'  $logit(\Delta_i) = W_i\gamma$
+#'  ![](../assets/M2.png)
+#' 
 #' 
 ## ----runmodel------------------------------------------------------------
 results=foreach(m=1:nrow(mods)) %dopar% { 
@@ -415,9 +416,13 @@ results=foreach(m=1:nrow(mods)) %dopar% {
 
 #' 
 #' ## Summarize posterior parameters
+#' The model returns full posterior distributions for all model parameters.  To summarize them you need to choose your summary metric (e.g. mean/median/quantiles). 
+#' 
 ## ----SummarizePosteriors-------------------------------------------------
+
 params=foreach(r1=results,.combine=rbind.data.frame)%do% {
   data.frame(model=r1$model,
+             modelname=r1$modelname,
              parameter=colnames(r1$mcmc),
              mean=summary(r1$mcmc)$statistics[,"Mean"],
              sd=summary(r1$mcmc)$statistics[,"SD"],
@@ -427,19 +432,25 @@ params=foreach(r1=results,.combine=rbind.data.frame)%do% {
 
 ## plot it
 ggplot(params[!grepl("Deviance*",rownames(params)),],
-       aes(x=mean,y=parameter,colour=model))+
+       aes(x=mean,y=parameter,colour=modelname))+
   geom_point()+
-  geom_errorbarh(aes(xmin=lower,xmax=upper,height=.1))
+  geom_errorbarh(aes(xmin=lower,xmax=upper,height=.1))+
+  theme(legend.position="bottom")
 
 #' 
 #' 
 #' ### Detection probability
+#' The model uses repeat obserations within cells to estimate the probabiliy observation given that the species was present.  
+#' 
 ## ----pDetect-------------------------------------------------------------
-pDetect <-   params[params$parameter=="gamma.(Intercept)",c("model","mean")]
+pDetect <-   params[params$parameter=="gamma.(Intercept)",
+                    c("modelname","mean")]
 pDetect$delta.est <- inv.logit(pDetect$mean)
 colnames(pDetect)[2]="gamma.hat"
-kable(pDetect)
+kable(pDetect,row.names=F)
 
+#' 
+#' >  How does this change if you add environmental covariates to the observability regression?
 #' 
 #' ## Predictions for each cell
 ## ----pPred---------------------------------------------------------------
@@ -470,22 +481,33 @@ gplot(pred)+geom_raster(aes(fill=value)) +
 
 
 #' 
-#' ## Additional Features
+#' ## Additional Models in hSDM
 #' 
 #' ### `*.icar`
 #' The `*.icar` functions in `hSDM` add _spatial effects_ to the model as well, accounting for spatial autocorrelation of species occurrence.  
-#' ### hSDM.siteocc
 #' 
-#' ## Summary
 #' 
-#' In this session, we illustrated:
+#' ### hSDM.binomial & hSDM.binomial.iCAR
+#' Simple and spatial binomial model (perfect detection).
 #' 
-#' * Used opportunistic species occurrence data and `hSDM` to fit an occupancy model
-#' * Compared output from models built with interpolated and satellite-derived environmental data
+#' ### hSDM.ZIB & hSDM.ZIB.iCAR & hSDM.ZIB.iCAR.alteration
+#' Zero-inflated Binomial (example we used today).
+#' 
+#' ### hSDM.ZIP & hSDM.ZIP.iCAR & hSDM.ZIP.iCAR.alteration
+#' Zero-inflated Poisson (Abundance data with imperfect detection).
+#' 
+#' ### hSDM.siteocc & hSDM.siteocc.iCAR
+#' Incorporates temporally varying environment to account for changing observation conditions.  
+#' 
+#' ### hSDM.poisson & hSDM.poisson.iCAR
+#' Simple and spatial poisson model for species abundance (perfect detection).
+#' 
+#' ### hSDM.Nmixture & hSDM.Nmixture.iCAR
+#' Poisson model for abundance with imperfect detection.
+#' 
 #' 
 #' ## Looking forward
 #' 
 #' * Incorporate multiple scales of observations (e.g. points & polygons)
 #' * Account directly for spatial uncertainties in point observations
 #' * Time-varying covariates with `hSDM.siteocc` or similar
-#' * 
