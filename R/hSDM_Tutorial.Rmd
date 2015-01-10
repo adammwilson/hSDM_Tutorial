@@ -36,6 +36,8 @@ This script is available:
   * [MD format with images/plots](https://github.com/adammwilson/hSDM_Tutorial/blob/master/R/hSDM_Tutorial.md)
   * [Plain text (.R) with commented text](https://raw.githubusercontent.com/adammwilson/hSDM_Tutorial/master/R/hSDM_Tutorial.R)
 
+You are welcome to follow along on the screen or download the R script and run it on your computer. 
+
 The data used below are available in a [public dropbox folder](https://www.dropbox.com/sh/2q0k7qn5rxz0bis/AAB42fVn-s4Teqynrs6rgzR3a?dl=0), though they will be downloaded using code below.  
 
 # Species Distribution Modeling
