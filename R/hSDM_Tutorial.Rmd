@@ -33,7 +33,6 @@ opts_chunk$set(cache=TRUE,
 
 This script is available:
 
-  * [hSDM Tutorial on GitHub](https://github.com/adammwilson/hSDM_Tutorial)
   * [MD format with images/plots](https://github.com/adammwilson/hSDM_Tutorial/blob/master/R/hSDM_Tutorial.md)
   * [Plain text (.R) with commented text](https://raw.githubusercontent.com/adammwilson/hSDM_Tutorial/master/R/hSDM_Tutorial.R)
 
@@ -41,7 +40,7 @@ The data used below are available in a [public dropbox folder](https://www.dropb
 
 # Species Distribution Modeling
 
-Two major problems which can bias model results: 
+Two important problems which can bias model results: 
 
 1. imperfect detections ("false absences")
 2. spatial correlation of the observations.

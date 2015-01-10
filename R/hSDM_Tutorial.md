@@ -12,8 +12,7 @@ Objectives
 
 This script is available:
 
--   [hSDM Tutorial on GitHub](https://github.com/adammwilson/hSDM_Tutorial)
--   [HTML format with images/plots](https://rawgit.com/adammwilson/hSDM_Tutorial/master/R/hSDM_Tutorial.html)
+-   [MD format with images/plots](https://github.com/adammwilson/hSDM_Tutorial/blob/master/R/hSDM_Tutorial.md)
 -   [Plain text (.R) with commented text](https://raw.githubusercontent.com/adammwilson/hSDM_Tutorial/master/R/hSDM_Tutorial.R)
 
 The data used below are available in a [public dropbox folder](https://www.dropbox.com/sh/2q0k7qn5rxz0bis/AAB42fVn-s4Teqynrs6rgzR3a?dl=0), though they will be downloaded using code below.
@@ -21,7 +20,7 @@ The data used below are available in a [public dropbox folder](https://www.dropb
 Species Distribution Modeling
 =============================
 
-Two major problems which can bias model results:
+Two important problems which can bias model results:
 
 1.  imperfect detections ("false absences")
 2.  spatial correlation of the observations.
