@@ -68,10 +68,6 @@ library(coda)  # Summarizing model output
 library(doParallel)  #running models in parallel
 ncores=2  # number of processor cores you would like to use
 registerDoParallel(ncores)
-
-## set light theme for ggplot
-theme_set(theme_light()+
-            theme(text=element_text(size = 38)))
 ```
 
 If you don't have the packages above, install them in the package manager or by running `install.packages("doParallel")`.
@@ -488,16 +484,19 @@ params=foreach(r1=results,.combine=rbind.data.frame)%do% {
              median=summary(r1$mcmc)$quantiles[,"50%"],
              HPDinterval(mcmc(as.matrix(r1$mcmc))),
              RejectionRate=rejectionRate(r1$mcmc))}
+```
 
+``` {.r}
 ## plot it
 ggplot(params[!grepl("Deviance*",rownames(params)),],
        aes(x=mean,y=parameter,colour=modelname))+
-  geom_errorbarh(aes(xmin=lower,xmax=upper,height=.1))+
-  geom_point()+
+  geom_errorbarh(aes(xmin=lower,xmax=upper,height=.1),lwd=1.5)+
+  geom_point(size = 3)+xlab("Standardized Coefficient")+
+  ylab("Parameter")+
   theme(legend.position="bottom")
 ```
 
-![](hSDM_Tutorial_files/figure-markdown_github/SummarizePosteriors-1.png)
+![](hSDM_Tutorial_files/figure-markdown_github/PlotPosteriors-1.png)
 
 ### Detection probability
 

@@ -7,7 +7,7 @@ output:
     variant: markdown_github
 ---
 
-```{r, echo=FALSE, warning=FALSE}
+```{r, echo=FALSE, warning=FALSE, cache=FALSE}
 library(knitr)
 library(rmarkdown)
 
@@ -18,8 +18,12 @@ opts_chunk$set(cache=TRUE,
                fig.width=15,
                fig.height=15)
 
+## set light theme for ggplot
+library(ggplot2)
+theme_set(theme_light()+
+            theme(text=element_text(size = 38)))
+
 # purl("R/hSDM_Tutorial.Rmd","R/hSDM_Tutorial.R",documentation=2)
-# rmarkdown::render("R/hSDM_Tutorial.Rmd", "all")
 ```
 # Introduction to hSDM
 
@@ -82,10 +86,6 @@ library(coda)  # Summarizing model output
 library(doParallel)  #running models in parallel
 ncores=2  # number of processor cores you would like to use
 registerDoParallel(ncores)
-
-## set light theme for ggplot
-theme_set(theme_light()+
-            theme(text=element_text(size = 38)))
 
 ```
 If you don't have the packages above, install them in the package manager or by running `install.packages("doParallel")`. 
@@ -446,7 +446,6 @@ results=foreach(m=1:nrow(mods)) %dopar% {
 The model returns full posterior distributions for all model parameters.  To summarize them you need to choose your summary metric (e.g. mean/median/quantiles). 
 
 ```{r SummarizePosteriors}
-
 params=foreach(r1=results,.combine=rbind.data.frame)%do% {
   data.frame(model=r1$model,
              modelname=r1$modelname,
@@ -456,12 +455,14 @@ params=foreach(r1=results,.combine=rbind.data.frame)%do% {
              median=summary(r1$mcmc)$quantiles[,"50%"],
              HPDinterval(mcmc(as.matrix(r1$mcmc))),
              RejectionRate=rejectionRate(r1$mcmc))}
-
+```
+```{r PlotPosteriors, fig.height=8}
 ## plot it
 ggplot(params[!grepl("Deviance*",rownames(params)),],
        aes(x=mean,y=parameter,colour=modelname))+
-  geom_errorbarh(aes(xmin=lower,xmax=upper,height=.1))+
-  geom_point()+
+  geom_errorbarh(aes(xmin=lower,xmax=upper,height=.1),lwd=1.5)+
+  geom_point(size = 3)+xlab("Standardized Coefficient")+
+  ylab("Parameter")+
   theme(legend.position="bottom")
 ```
 
@@ -481,7 +482,6 @@ kable(pDetect,row.names=F)
 
 ## Predictions for each cell
 ```{r pPred}
-
 pred=foreach(r1=results,.combine=stack)%dopar% {
   tr=rasterFromXYZ(cbind(x=pdata$x,
                          y=pdata$y,
@@ -493,7 +493,6 @@ pred=foreach(r1=results,.combine=stack)%dopar% {
 
 Compare the model predictions
 ```{r plotmodel}
-
 predscale=scale_fill_gradientn(values=c(0,.5,1),colours=c('white','darkgreen','green'),na.value="transparent")
 
 gplot(pred)+geom_raster(aes(fill=value)) +
