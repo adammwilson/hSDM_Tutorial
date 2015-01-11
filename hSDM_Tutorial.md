@@ -192,9 +192,10 @@ ggplot(spd_all,aes(
   x=effort_distance_km,
   colour=presence==1,
   order=as.factor(presence)))+
+  scale_colour_manual(values=c("grey","red"))+
   ylab("Sampling Duration (hours)")+
   xlab("Sampling Distance (km)")+
-  labs(col = "Observed\nPresence")+
+  labs(colour = "Observed\nPresence")+
   geom_point()+scale_x_log10()
 ```
 
