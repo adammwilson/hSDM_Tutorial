@@ -5,5 +5,5 @@ Integrative analysis of spatial biodiversity data and Map of Life
 
 ## hSDM Introduction
 
-This repository holds the code we will demonstrate in the *Introduction to hSDM* component of the workshop. 
+This repository holds the code we will demonstrate in the *Introduction to hSDM* component of the workshop.   You probably want to look at the Tutorial script, which is [here](hSDM_Tutorial.md)
 
