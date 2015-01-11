@@ -187,14 +187,14 @@ kable(head(spd_all[,-1]))
 ```
 
 Explore  observer effort: sampling duration, distance travelled, and area surveyed.
-```{r spdDurationPlot,fig.width=9,fig.height=9}
+```{r spdDurationPlot,fig.width=10,fig.height=7}
 ggplot(spd_all,aes(
   y=duration_minutes/60,
   x=effort_distance_km,
   colour=presence==1,
   order=as.factor(presence)))+
   scale_colour_manual(values=c("grey","red"))+
-  ylab("Sampling Duration (hours)")+
+  ylab("Sampling Duration\n(hours)")+
   xlab("Sampling Distance (km)")+
   labs(colour = "Observed\nPresence")+
   geom_point()+scale_x_log10()

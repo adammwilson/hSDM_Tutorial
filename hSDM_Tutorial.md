@@ -193,7 +193,7 @@ ggplot(spd_all,aes(
   colour=presence==1,
   order=as.factor(presence)))+
   scale_colour_manual(values=c("grey","red"))+
-  ylab("Sampling Duration (hours)")+
+  ylab("Sampling Duration\n(hours)")+
   xlab("Sampling Distance (km)")+
   labs(colour = "Observed\nPresence")+
   geom_point()+scale_x_log10()
