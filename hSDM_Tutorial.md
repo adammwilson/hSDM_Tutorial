@@ -17,7 +17,7 @@ This script is available:
 
 You are welcome to follow along on the screen or download the R script and run it on your computer.
 
-The data used below are available in a [public dropbox folder](https://www.dropbox.com/sh/2q0k7qn5rxz0bis/AAB42fVn-s4Teqynrs6rgzR3a?dl=0), though they will be downloaded using code below.
+The data used below are available in a [public dropbox folder](https://www.dropbox.com/sh/2q0k7qn5rxz0bis/AAB42fVn-s4Teqynrs6rgzR3a?dl=0), though they will be downloaded using code below. You may want to download them now by visiting
 
 Species Distribution Modeling
 =============================
@@ -38,7 +38,7 @@ Developed by [Ghislain Vieilledent](mailto:ghislain.vieilledent@cirad.fr) with C
 
 ### Software for modeling species distribution including imperfect detection.
 
-![hSDM](../assets/DetectionMods.png)
+![hSDM](assets/DetectionMods.png)
 
 The problem of imperfect detection
 ----------------------------------
@@ -77,13 +77,13 @@ If you don't have the packages above, install them in the package manager or by 
 Example Species: *Montane Woodcreeper* (*Lepidocolaptes lacrymiger*)
 --------------------------------------------------------------------
 
-<img src="../assets/Lepidocolaptes_lacrymiger.jpg" alt="Lepidocolaptes_lacrymiger Photo" width="250px" />
+<img src="assets/Lepidocolaptes_lacrymiger.jpg" alt="Lepidocolaptes_lacrymiger Photo" width="250px" />
 
 <br><span style="color:grey; font-size:1em;">Figure from [hbw.com](http://www.hbw.com/species/montane-woodcreeper-lepidocolaptes-lacrymiger) </span>
 
 > This species has a large range, occurring from the coastal cordillera of Venezuela along the Andes south to south-east Peru and central Bolivia. [birdlife.org](http://www.birdlife.org/datazone/speciesfactsheet.php?id=31946)
 
-<img src="../assets/Lepidocolaptes_lacrymiger_range.png" alt="Lepidocolaptes_lacrymiger Photo" width="200px" />
+<img src="assets/Lepidocolaptes_lacrymiger_range.png" alt="Lepidocolaptes_lacrymiger Photo" width="200px" />
 
 <br><span style="color:grey; font-size:1em;">Data via [MOL.org](http://map.mol.org/maps/Lepidocolaptes%20lacrymiger) </span>
 
@@ -433,11 +433,11 @@ If the species has been observed at least once during multiple visits, we can as
 
 **Ecological process:**
 
-![](../assets/M1.png)
+![](assets/M1.png)
 
 **Observation process:**
 
-![](../assets/M2.png)
+![](assets/M2.png)
 
 In this example we'll assume a spatially constant p(observation|presence), but it's also possible to put in covariates for this parameter.
 
