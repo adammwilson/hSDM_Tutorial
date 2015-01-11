@@ -154,3 +154,50 @@ spd_all=getebird(
   )
 
 ```
+
+
+### Annotate with Environmental Data
+```{r}
+fspData="Lepidocolaptes_lacrymiger_points.csv"
+
+spd_all=read.csv(fspData)
+
+coordinates(spd_all)=c("longitude","latitude")
+projection(spd_all)="+proj=longlat +datum=WGS84 +ellps=WGS84"
+spd_all@data[,c("lon","lat")]=coordinates(spd_all)  
+
+
+fenvdata="data/Lepidocolaptes_lacrymiger.tif"
+
+env=stack(paste0(sp,"_env.tif"))
+names(env)=c("PPTJAN","PPTJUL","PPTSEAS","MAT","ALT","CLDJAN","CLDJUL","CLDSEAS")
+```
+### Scale environmental data
+Scaling covariate data^[subtract the mean and divide by the standard deviation] results in standardized parameter values and also can speed up modeling convergence.  It's possible to _unscale_ the results later if desired.
+
+```{r scaleEnv,eval=FALSE}
+## Create a 'scaled' version for modeling
+senv=raster::scale(env)*100
+names(senv)=c("PPTJAN","PPTJUL","PPTSEAS","MAT","ALT","CLDJAN","CLDJUL","CLDSEAS")
+
+writeRaster(senv,paste0(sp,"_env_scaled.tif"),
+            datatype="INT2S",overwrite=T,
+            options=c("COMPRESS=LZW", "PREDICTOR=2"))
+
+## create smaller version for workshop
+system("gdal_translate Lepidocolaptes_lacrymiger_env_scaled.tif Lepidocolaptes_lacrymiger_env_scaled_small.tif -co 'COMPRESS=LZW' -co 'PREDICTOR=2' -projwin -78 8 -72 3")
+
+```
+
+```{r}
+#### Extract data for points
+gain(senv)=.01
+spd_env=extract(senv,spd_all,cellnumbers=T)
+spd_cellcoords=coordinates(senv)[spd_env[,"cells"],]
+colnames(spd_cellcoords)=c("cell_lon","cell_lat")
+head(spd_env)
+
+spd_all2=cbind.data.frame(spd_all,spd_env,spd_cellcoords)
+
+write.csv(spd_all2[,-1],file=paste0(sp,"_points_env.csv"))
+```

@@ -99,16 +99,19 @@ Data Directory
 The script below will download data to the directory specified below. Feel free to change it as desired.
 
 ``` {.r}
-## set path to data folder
-datadir=paste0("../data/",sp,"/")
+## set working directory and path where you want to download data
+## you may want to change this to your home directory or elsewhere
+datadir=paste0("hSDM_Tutorialdata/")
 if(!file.exists(datadir)) dir.create(datadir,recursive = T)
+
+setwd(datadir)
 ```
 
 Extract species 'expert range' via MOL.
 ---------------------------------------
 
 ``` {.r}
-fExpertRange=paste0(datadir,"/",sp,".shp")
+fExpertRange=paste0(sp,".shp")
 if(!file.exists(fExpertRange)){
   download.file(paste0("http://mol.cartodb.com/api/v2/sql?",
                      "q=SELECT%20ST_TRANSFORM(the_geom_webmercator,4326)%20as%20the_geom,",
@@ -116,7 +119,7 @@ if(!file.exists(fExpertRange)){
                      paste(strsplit(sp,"_")[[1]],collapse="%20"),
                      "','jetz_maps')&format=shp&filename=",sp),
               destfile=sub("shp","zip",fExpertRange))
-  unzip(sub("shp","zip",fExpertRange),exdir=datadir)
+  unzip(sub("shp","zip",fExpertRange))
 }
 ```
 
@@ -144,7 +147,7 @@ Query eBird data contained in MOL
 
 Metadata for eBird[1] is [available here](http://ebird.org/ebird/data/download)
 
-For this example we'll use data that has been precompiled using the criteria above. If you'd like to see how we compiled these data, [see here](https://github.com/adammwilson/hSDM_Tutorial/blob/master/R/hSDM_DataPrep.md)
+For this example we'll use data that has been precompiled using the criteria above.
 
 Download species occurrence data
 --------------------------------
@@ -152,11 +155,11 @@ Download species occurrence data
 We've made this exampled dataset available *via* the DropBox links below. If you have the `RCurl` package installed, the following commands should run. If these do not work, [you can also download these datasets from here](https://www.dropbox.com/sh/2q0k7qn5rxz0bis/AAB42fVn-s4Teqynrs6rgzR3a?dl=0).
 
 ``` {.r}
-fspData=paste0(datadir,"Lepidocolaptes_lacrymiger_points.csv")
+fspData="Lepidocolaptes_lacrymiger_points_env.csv"
 
 if(!file.exists(fspData)) {
-    URL <- paste0("https://www.dropbox.com/s/y9np2fdpw5lg5jw/",
-                  "Lepidocolaptes_lacrymiger_points.csv?dl=1")
+    URL <- paste0("https://www.dropbox.com/s/1jsyl0xkxnzk20k/",
+                  "Lepidocolaptes_lacrymiger_points_env.csv?dl=1")
 
     download.file(URL,
               destfile=fspData,
@@ -172,14 +175,14 @@ Check out the data structure:
 kable(head(spd_all[,-1]))
 ```
 
-|latitude|longitude|observation\_date|presence|effort\_distance\_km|duration\_minutes|effort\_area\_ha|
-|-------:|--------:|:----------------|-------:|-------------------:|----------------:|---------------:|
-|3.518712|-76.71831|1989-07-06|1|NA|NA|NA|
-|-10.553145|-75.31591|2004-05-05|1|NA|NA|NA|
-|4.647434|-75.64572|2004-04-06|1|2.000|150|NA|
-|-13.053392|-71.53610|1994-09-03|1|NA|NA|NA|
-|-16.193000|-67.88500|1999-09-23|1|1.931|390|NA|
-|8.603094|-71.24751|1985-04-18|1|16.093|420|NA|
+|latitude|longitude|observation\_date|presence|effort\_distance\_km|duration\_minutes|effort\_area\_ha|lon|lat|cells|PPTJAN|PPTJUL|PPTSEAS|MAT|ALT|CLDJAN|CLDJUL|CLDSEAS|cell\_lon|cell\_lat|
+|-------:|--------:|:----------------|-------:|-------------------:|----------------:|---------------:|--:|--:|----:|-----:|-----:|------:|--:|--:|-----:|-----:|------:|--------:|--------:|
+|3.518712|-76.71831|1989-07-06|1|NA|NA|NA|-76.71831|3.518712|2044450|-0.5854745|-0.6289205|-0.6954783|-0.4205597|0.6166451|0.9091247|1.0589650|-1.4256417|-76.72083|3.520833|
+|-10.553145|-75.31591|2004-05-05|1|NA|NA|NA|-75.31591|-10.553145|5780687|-0.1790140|-0.9208561|0.1404697|-1.2675758|1.5233957|1.3211621|1.0634702|-1.2863199|-75.31250|-10.554167|
+|4.647434|-75.64572|2004-04-06|1|2.000|150|NA|-75.64572|4.647434|1745959|-0.0011875|-0.3512257|-0.6954783|-0.8191555|0.8737833|1.1372553|1.0013975|-1.1757711|-75.64583|4.645833|
+|-13.053392|-71.53610|1994-09-03|1|NA|NA|NA|-71.53610|-13.053392|6444740|1.6839302|-0.4722722|-0.1502948|-0.3541270|0.5413645|1.2025126|0.9788711|-0.7154036|-71.53750|-13.054167|
+|-16.193000|-67.88500|1999-09-23|1|1.931|390|NA|-67.88500|-16.193000|7279102|0.2189787|-1.0276618|0.7219987|-1.0184534|1.3753721|1.3373415|-0.0508354|0.2674206|-67.88750|-16.195833|
+|8.603094|-71.24751|1985-04-18|1|16.093|420|NA|-71.24751|8.603094|695787|-1.1612936|-0.3369850|-0.1139493|-1.5665226|1.4303523|1.1361767|1.3207717|-1.2469464|-71.24583|8.604167|
 
 Explore observer effort: sampling duration, distance travelled, and area surveyed.
 
@@ -218,7 +221,7 @@ Filter the data below thresholds specified above.
 cdur=4*60  # Duration in minutes
 cdis=5     # Distance in km
 care=500   # Area in Hectares
-
+ 
 spd=filter(spd_all,
            duration_minutes<=cdur&
           (effort_distance_km<=cdis|effort_area_ha<=care))
@@ -229,7 +232,7 @@ Convert to a spatialDataFrame to faciliate linking with georeferenced environmen
 ``` {.r}
 coordinates(spd)=c("longitude","latitude")
 projection(spd)="+proj=longlat +datum=WGS84 +ellps=WGS84"
-spd@data[,c("lon","lat")]=coordinates(spd)  
+spd@data[,c("lon","lat")]=coordinates(spd)   
 ```
 
 ### Load coastline from maptools package for plotting.
@@ -238,11 +241,8 @@ spd@data[,c("lon","lat")]=coordinates(spd)
 coast <- map_data("world",
                   xlim=c(ereg@xmin-1,ereg@xmax+1),
                   ylim=c(ereg@ymin-1,ereg@ymax+1))
-ggcoast=geom_path(data=coast,aes(x=long,y=lat,group = group),lwd=.1)
-
-## set plotting limits using expert range above
-gx=xlim(ereg@xmin-1,ereg@xmax+1)
-gy=ylim(ereg@ymin-1,ereg@ymax+1)
+ggcoast=geom_path(data=coast,
+                  aes(x=long,y=lat,group = group),lwd=.1)
 ```
 
 Available Species Data
@@ -250,11 +250,20 @@ Available Species Data
 
 ``` {.r}
 ggplot(spd@data,aes(y=lat,x=lon))+
-  geom_path(data=fortify(reg),aes(y=lat,x=long,group=piece),fill="green",col="green")+
-  geom_point(aes(colour=presence>=1,order=as.factor(presence)))+
-  ggcoast+gx+gy+ylab("Latitude")+xlab("Longitude")+
+  geom_path(data=fortify(reg),
+            aes(y=lat,x=long,group=piece),
+            col="green")+
+  geom_point(data=filter(spd@data,presence==0),
+             aes(x=lon,y=lat,fill=1),pch=1,
+             col="black",cex=.8,lwd=2,alpha=.3)+
+  geom_point(data=filter(spd@data,presence==1),
+             aes(x=lon,y=lat,fill=1),pch=3,
+             col="red",cex=2,lwd=3,alpha=1)+
+  ggcoast+ylab("Latitude")+xlab("Longitude")+
   labs(col = "Species\nObserved")+
-  coord_equal()
+  coord_equal()+
+  xlim(c(min(spd$lon),max(spd$lon)))+
+  ylim(c(min(spd$lat),max(spd$lat)))
 ```
 
 ![](hSDM_Tutorial_files/figure-markdown_github/spdPlot-1.png)
@@ -275,49 +284,56 @@ We've also pre-compiled environmental data for the region and made it available 
 -   **CLDJUL**: Mean July Cloud Frequency (1000s %, Wilson&Jetz)
 -   **CLDSEAS**: Cloud Seasonality (1000s %, Wilson&Jetz)
 
-Download a single geotif with 8 bands corresponding to the data above.
+Download a single geotif with 8 bands corresponding to the data above for a subset of the species' range.
 
 ``` {.r}
-fenvdata="data/Lepidocolaptes_lacrymiger.tif"
+fenvdata="Lepidocolaptes_lacrymiger_env_scaled.tif"
 
 if(!file.exists(fenvdata)) {
-    URL <- paste0("https://www.dropbox.com/s/1vjw848ehyzybl1/",
-              "Lepidocolaptes_lacrymiger_env.tif?dl=1")
 
-    download.file(URL,
+URL <- paste0("https://www.dropbox.com/s/7i5hl3gv53l8m4v/",
+           "Lepidocolaptes_lacrymiger_env_scaled_small.tif?dl=1")
+
+URL <- paste0("https://www.dropbox.com/s/lmthtpmzyyc4ghz/",
+              "Lepidocolaptes_lacrymiger_env_scaled.tif?dl=1")
+
+
+
+download.file(URL,
               destfile=fenvdata,
               method='curl',extra='-L')
 }
-
-env=stack(paste0(datadir,sp,"env.tif"))
+ 
+env=stack(fenvdata)
+gain(env)=0.01
 names(env)=c("PPTJAN","PPTJUL","PPTSEAS","MAT","ALT","CLDJAN","CLDJUL","CLDSEAS")
-```
-
-### Scale environmental data
-
-Scaling covariate data[2] results in standardized parameter values and also can speed up modeling convergence. It's possible to *unscale* the results later if desired.
-
-``` {.r}
-## Create a 'scaled' version for modeling
-senv=raster::scale(env)
 ```
 
 ### Visualize the environmental data
 
 ``` {.r}
+## set plotting limits using expert range above
+
+gx=xlim(extent(env)@xmin,extent(env)@xmax)
+gy=ylim(extent(env)@ymin,extent(env)@ymax)
+
+
 ## Environmental data
-gplot(senv)+
+gplot(env)+
   geom_raster(aes(fill=value)) + 
   facet_wrap(~variable,nrow=2) +
-  scale_fill_gradientn(colours=c('blue','white','red','darkred'),breaks=c(-3,0,3,6),na.value="transparent")+
+  scale_fill_gradientn(
+    colours=c('blue','white','red','darkred'),
+    breaks=c(-3,0,3,6),na.value="transparent")+
   ylab("")+xlab("")+labs(fill = "Standardized\nValue")+
+    geom_path(data=fortify(reg),aes(y=lat,x=long,group=piece),fill="green",col="black")+
   ggcoast+gx+gy+coord_equal()
 ```
 
 ![](hSDM_Tutorial_files/figure-markdown_github/plotEnv-1.png) \#\#\# Covariate correlation Scatterplot matrix of the available environmental data.
 
 ``` {.r}
-splom(senv,varname.cex=2)
+splom(env,varname.cex=2)
 ```
 
 ![](hSDM_Tutorial_files/figure-markdown_github/envCor-1.png)
@@ -327,50 +343,54 @@ splom(senv,varname.cex=2)
 First we need to 'grid' the point-level species observations to match the environmental data.
 
 ``` {.r}
-## add cell id to facilitate linking points to raster
-cell=env[[1]]
-raster::values(cell)=1:ncell(cell)
-names(cell)="cell"
+fdata=spd@data%>%
+  group_by(cell_lon,cell_lat,cells)%>%
+  summarize(
+            presences=sum(presence),  # Number of observations
+            trials=sum(presence==0),  # Number of trials in each cell
+            PPTJAN=mean(PPTJAN),
+            PPTJUL=mean(PPTJUL),
+            PPTSEAS=mean(PPTSEAS),
+            MAT=mean(MAT),
+            ALT=mean(ALT),
+            CLDJAN=mean(CLDJAN),
+            CLDJUL=mean(CLDJUL),
+            CLDSEAS=mean(CLDSEAS))
 
-## rasterize points
-presences=rasterize(spd,env,fun="sum",field="presence",background=0)
-trials=rasterize(spd,env,fun="count",field="presence",background=0)
-```
-
-Then transform the full gridded dataset into a point-level dataset with the number of `trials`, `presences` and associated environmental data.
-
-``` {.r}
-data=cbind.data.frame(
-  coordinates(senv),
-  trials=values(trials),
-  presences=values(presences),
-  cell=values(cell),
-  values(senv))
+## Due to oppotunistic observations of the species, a few grid cells
+## have more observations than trials.  Could remove them or adjust 
+## trials up in these cells
+fdata$trials=ifelse(fdata$presences>fdata$trials,
+                     fdata$presences,fdata$trials)
 
 ## omit rows with missing data (primarily ocean pixels)
-data=na.omit(data)
-
-kable(head(data))
+fdata=na.omit(fdata)
 ```
 
-||x|y|trials|presences|cell|PPTJAN|PPTJUL|PPTSEAS|MAT|ALT|CLDJAN|CLDJUL|CLDSEAS|
-|---|--:|--:|-----:|--------:|---:|-----:|-----:|------:|--:|--:|-----:|-----:|------:|
-|859|-74.24583|11.22083|0|0|859|-1.423799|-0.8140504|0.9764176|0.8416604|-0.6208328|-3.099071|-0.5569284|1.625808|
-|860|-74.23750|11.22083|0|0|860|-1.423799|-0.8069300|0.9400721|0.8250522|-0.6182952|-3.094218|-0.5344020|1.728785|
-|861|-74.22917|11.22083|0|0|861|-1.406864|-0.7072447|0.9037265|0.7254033|-0.5345561|-3.119565|-0.4127595|1.839334|
-|862|-74.22083|11.22083|0|0|862|-1.389928|-0.6075594|0.9400721|0.6423625|-0.4761925|-3.097453|-0.1899985|2.007428|
-|863|-74.21250|11.22083|0|0|863|-1.415331|-0.7855689|0.9037265|0.8250522|-0.6115284|-3.126577|0.1173617|2.305759|
-|864|-74.20417|11.22083|0|0|864|-1.415331|-0.7784485|0.9037265|0.8250522|-0.6106826|-3.105004|0.2700406|2.475368|
-
-This table is similar to the data available from the "Annotate" function in MOL, with the exception that it contains the point data aggregated to the resolution of the environmental data.
-
-### Select data for fitting
-
-Create 'fitting' dataset limited to locations with at least one `trial`.
+Then transform the full gridded dataset into a `data.frame` with associated environmental data for predicting across space.
 
 ``` {.r}
-fdata=data[data$trials>0,]
+pdata=cbind.data.frame(
+  coordinates(env),
+  values(env))
+
+
+## omit rows with missing data (primarily ocean pixels)
+pdata=na.omit(pdata)
+
+kable(head(pdata))
 ```
+
+||x|y|PPTJAN|PPTJUL|PPTSEAS|MAT|ALT|CLDJAN|CLDJUL|CLDSEAS|
+|---|--:|--:|-----:|-----:|------:|--:|--:|-----:|-----:|------:|
+|859|-74.24583|11.22083|-1.42|-0.81|0.97|0.84|-0.62|-3.09|-0.55|1.62|
+|860|-74.23750|11.22083|-1.42|-0.80|0.94|0.82|-0.61|-3.09|-0.53|1.72|
+|861|-74.22917|11.22083|-1.40|-0.70|0.90|0.72|-0.53|-3.11|-0.41|1.83|
+|862|-74.22083|11.22083|-1.38|-0.60|0.94|0.64|-0.47|-3.09|-0.18|2.00|
+|863|-74.21250|11.22083|-1.41|-0.78|0.90|0.82|-0.61|-3.12|0.11|2.30|
+|864|-74.20417|11.22083|-1.41|-0.77|0.90|0.82|-0.61|-3.10|0.27|2.47|
+
+This table is similar to the data available from the "Annotate" function in MOL, with the exception that it contains the point data aggregated to the resolution of the environmental data.
 
 Model Comparison
 ----------------
@@ -438,7 +458,7 @@ results=foreach(m=1:nrow(mods)) %dopar% {
     observability=~1,             # Formula for p(observation|presence)
     trials=fdata$trials,          # Number of Trials
     data=fdata,                   # Covariates for fitting model
-    suitability.pred=data,        # Covariates for prediction 
+    suitability.pred=pdata,        # Covariates for prediction 
     mugamma=0, Vgamma=1.0E6,      # Priors on Gamma
     gamma.start=0,                # Gamma initial Value
     burnin=burnin, mcmc=mcmc, thin=thin,  # MCMC parameters
@@ -493,8 +513,8 @@ kable(pDetect,row.names=F)
 
 |modelname|gamma.hat|delta.est|
 |:--------|--------:|--------:|
-|Precipitation|-1.323061|0.2103095|
-|Cloud|-1.283685|0.2169236|
+|Precipitation|-0.9410443|0.2806894|
+|Cloud|-0.9004692|0.2889541|
 
 > How does this change if you add environmental covariates to the observability regression?
 
@@ -503,8 +523,8 @@ Predictions for each cell
 
 ``` {.r}
 pred=foreach(r1=results,.combine=stack)%dopar% {
-  tr=rasterFromXYZ(cbind(x=data$x,
-                         y=data$y,
+  tr=rasterFromXYZ(cbind(x=pdata$x,
+                         y=pdata$y,
                          pred=r1$prob.p.pred))
   names(tr)=r1$modelname    
   return(tr)
@@ -521,7 +541,12 @@ gplot(pred)+geom_raster(aes(fill=value)) +
   predscale+
   coord_equal()+
   geom_path(data=fortify(reg),
-            aes(y=lat,x=long,group=piece),fill="red",col="red")+
+            aes(y=lat,x=long,group=piece),
+            fill="red",col="red")+
+  geom_point(data=filter(spd@data,presence==0),
+             aes(x=lon,y=lat,fill=1),pch=1,col="black",cex=.8,lwd=2,alpha=.3)+
+  geom_point(data=filter(spd@data,presence==1),
+             aes(x=lon,y=lat,fill=1),pch=3,col="red",cex=2,lwd=3,alpha=1)+
   ggcoast+gx+gy+ylab("Latitude")+xlab("Longitude")+
   labs(col = "p(presence)")+
   coord_equal()
@@ -568,5 +593,3 @@ Looking forward
 -   Time-varying covariates with `hSDM.siteocc` or similar
 
 [1] M. Arthur Munson, Kevin Webb, Daniel Sheldon, Daniel Fink, Wesley M. Hochachka, Marshall Iliff, Mirek Riedewald, Daria Sorokina, Brian Sullivan, Christopher Wood, and Steve Kelling. The eBird Reference Dataset, Version 5.0. Cornell Lab of Ornithology and National Audubon Society, Ithaca, NY, January 2013.
-
-[2] subtract the mean and divide by the standard deviation
