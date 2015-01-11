@@ -12,8 +12,8 @@ Objectives
 
 This script is available:
 
--   [MD format with images/plots](https://github.com/adammwilson/hSDM_Tutorial/blob/master/R/hSDM_Tutorial.md)
--   [Plain text (.R) with commented text](https://raw.githubusercontent.com/adammwilson/hSDM_Tutorial/master/R/hSDM_Tutorial.R)
+-   [MD format with images/plots](https://github.com/adammwilson/hSDM_Tutorial/blob/master/hSDM_Tutorial.md)
+-   [Plain text (.R) with commented text](https://raw.githubusercontent.com/adammwilson/hSDM_Tutorial/master/hSDM_Tutorial.R)
 
 You are welcome to follow along on the screen or download the R script and run it on your computer.
 

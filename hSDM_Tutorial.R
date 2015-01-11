@@ -23,7 +23,7 @@ library(ggplot2)
 theme_set(theme_light()+
             theme(text=element_text(size = 38)))
 
-# purl("R/hSDM_Tutorial.Rmd","R/hSDM_Tutorial.R",documentation=2)
+# purl("hSDM_Tutorial.Rmd","hSDM_Tutorial.R",documentation=2)
 
 #' # Introduction to hSDM
 #' 
@@ -37,8 +37,8 @@ theme_set(theme_light()+
 #' 
 #' This script is available:
 #' 
-#'   * [MD format with images/plots](https://github.com/adammwilson/hSDM_Tutorial/blob/master/R/hSDM_Tutorial.md)
-#'   * [Plain text (.R) with commented text](https://raw.githubusercontent.com/adammwilson/hSDM_Tutorial/master/R/hSDM_Tutorial.R)
+#'   * [MD format with images/plots](https://github.com/adammwilson/hSDM_Tutorial/blob/master/hSDM_Tutorial.md)
+#'   * [Plain text (.R) with commented text](https://raw.githubusercontent.com/adammwilson/hSDM_Tutorial/master/hSDM_Tutorial.R)
 #' 
 #' You are welcome to follow along on the screen or download the R script and run it on your computer. 
 #' 
