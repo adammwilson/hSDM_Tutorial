@@ -81,11 +81,15 @@ If you don't have the packages above, install them in the package manager or by 
 Example Species: *Montane Woodcreeper* (*Lepidocolaptes lacrymiger*)
 --------------------------------------------------------------------
 
-![Lepidocolaptes\_lacrymiger Photo](../assets/Lepidocolaptes_lacrymiger.jpg) <br><span style="color:grey; font-size:1em;">Figure from [hbw.com](http://www.hbw.com/species/montane-woodcreeper-lepidocolaptes-lacrymiger) </span>
+<img src="../assets/Lepidocolaptes_lacrymiger.jpg" alt="Lepidocolaptes_lacrymiger Photo" width="250px" />
+
+<br><span style="color:grey; font-size:1em;">Figure from [hbw.com](http://www.hbw.com/species/montane-woodcreeper-lepidocolaptes-lacrymiger) </span>
 
 > This species has a large range, occurring from the coastal cordillera of Venezuela along the Andes south to south-east Peru and central Bolivia. [birdlife.org](http://www.birdlife.org/datazone/speciesfactsheet.php?id=31946)
 
-![Lepidocolaptes\_lacrymiger Data](../assets/Lepidocolaptes_lacrymiger_range.png) <br><span style="color:grey; font-size:1em;">Data via [MOL.org](http://map.mol.org/maps/Lepidocolaptes%20lacrymiger) </span>
+<img src="../assets/Lepidocolaptes_lacrymiger_range.png" alt="Lepidocolaptes_lacrymiger Photo" width="200px" />
+
+<br><span style="color:grey; font-size:1em;">Data via [MOL.org](http://map.mol.org/maps/Lepidocolaptes%20lacrymiger) </span>
 
 Set species name:
 
@@ -241,6 +245,7 @@ spd@data[,c("lon","lat")]=coordinates(spd)
 coast <- map_data("world",
                   xlim=c(ereg@xmin-1,ereg@xmax+1),
                   ylim=c(ereg@ymin-1,ereg@ymax+1))
+
 ggcoast=geom_path(data=coast,
                   aes(x=long,y=lat,group = group),lwd=.1)
 ```
@@ -250,17 +255,17 @@ Available Species Data
 
 ``` {.r}
 ggplot(spd@data,aes(y=lat,x=lon))+
+  ggcoast+ 
   geom_path(data=fortify(reg),
             aes(y=lat,x=long,group=piece),
             col="green")+
   geom_point(data=filter(spd@data,presence==0),
-             aes(x=lon,y=lat,fill=1),pch=1,
+             aes(x=lon,y=lat),pch=1,
              col="black",cex=.8,lwd=2,alpha=.3)+
   geom_point(data=filter(spd@data,presence==1),
-             aes(x=lon,y=lat,fill=1),pch=3,
+             aes(x=lon,y=lat),pch=3,
              col="red",cex=2,lwd=3,alpha=1)+
-  ggcoast+ylab("Latitude")+xlab("Longitude")+
-  labs(col = "Species\nObserved")+
+  ylab("Latitude")+xlab("Longitude")+
   coord_equal()+
   xlim(c(min(spd$lon),max(spd$lon)))+
   ylim(c(min(spd$lat),max(spd$lat)))
@@ -293,11 +298,6 @@ if(!file.exists(fenvdata)) {
 
 URL <- paste0("https://www.dropbox.com/s/7i5hl3gv53l8m4v/",
            "Lepidocolaptes_lacrymiger_env_scaled_small.tif?dl=1")
-
-URL <- paste0("https://www.dropbox.com/s/lmthtpmzyyc4ghz/",
-              "Lepidocolaptes_lacrymiger_env_scaled.tif?dl=1")
-
-
 
 download.file(URL,
               destfile=fenvdata,
@@ -513,8 +513,8 @@ kable(pDetect,row.names=F)
 
 |modelname|gamma.hat|delta.est|
 |:--------|--------:|--------:|
-|Precipitation|-0.9410443|0.2806894|
-|Cloud|-0.9004692|0.2889541|
+|Precipitation|-0.9347880|0.2819543|
+|Cloud|-0.8972593|0.2896140|
 
 > How does this change if you add environmental covariates to the observability regression?
 
@@ -557,33 +557,19 @@ gplot(pred)+geom_raster(aes(fill=value)) +
 Additional Models in hSDM
 -------------------------
 
-### `*.icar`
+`*.icar` The `*.icar` functions in `hSDM` add *spatial effects* to the model as well, accounting for spatial autocorrelation of species occurrence.
 
-The `*.icar` functions in `hSDM` add *spatial effects* to the model as well, accounting for spatial autocorrelation of species occurrence.
+`hSDM.binomial` & `hSDM.binomial.iCAR` Simple and spatial binomial model (perfect detection).
 
-### `hSDM.binomial` & `hSDM.binomial.iCAR`
+`hSDM.ZIB` & `hSDM.ZIB.iCAR` & `hSDM.ZIB.iCAR.alteration` Zero-inflated Binomial (example we used today).
 
-Simple and spatial binomial model (perfect detection).
+`hSDM.ZIP` & `hSDM.ZIP.iCAR` & `hSDM.ZIP.iCAR.alteration` Zero-inflated Poisson (Abundance data with imperfect detection).
 
-### `hSDM.ZIB` & `hSDM.ZIB.iCAR` & `hSDM.ZIB.iCAR.alteration`
+`hSDM.siteocc` & `hSDM.siteocc.iCAR` Incorporates temporally varying environment to account for changing observation conditions.
 
-Zero-inflated Binomial (example we used today).
+`hSDM.poisson` & `hSDM.poisson.iCAR` Simple and spatial poisson model for species abundance (perfect detection).
 
-### `hSDM.ZIP` & `hSDM.ZIP.iCAR` & `hSDM.ZIP.iCAR.alteration`
-
-Zero-inflated Poisson (Abundance data with imperfect detection).
-
-### `hSDM.siteocc` & `hSDM.siteocc.iCAR`
-
-Incorporates temporally varying environment to account for changing observation conditions.
-
-### `hSDM.poisson` & `hSDM.poisson.iCAR`
-
-Simple and spatial poisson model for species abundance (perfect detection).
-
-### `hSDM.Nmixture` & `hSDM.Nmixture.iCAR`
-
-Poisson model for abundance with imperfect detection.
+`hSDM.Nmixture` & `hSDM.Nmixture.iCAR` Poisson model for abundance with imperfect detection.
 
 Looking forward
 ---------------

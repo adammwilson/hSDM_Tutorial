@@ -10,3 +10,23 @@ R/hSDM_Tutorial_cache
 *.rdb
 
 *.rdx
+
+R/hSDM_DataPrep_cache/markdown_github/__packages
+
+R/hSDM_DataPrep_cache/html/__packages
+
+R/Lepidocolaptes_lacrymiger.zip
+
+R/Lepidocolaptes_lacrymiger.shx
+
+R/Lepidocolaptes_lacrymiger.shp
+
+R/Lepidocolaptes_lacrymiger.dbf
+
+R/Lepidocolaptes_lacrymiger.cpg
+
+R/Lepidocolaptes_lacrymiger_env_scaled.tif
+
+R/Lepidocolaptes_lacrymiger_points_env.csv
+
+R/Lepidocolaptes_lacrymiger.prj
