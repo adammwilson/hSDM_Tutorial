@@ -169,6 +169,8 @@ if(!file.exists(fspData)) {
 spd_all=read.csv(fspData)
 ```
 
+> If you have trouble with the download, you can also download these files via the [DropBox website](https://www.dropbox.com/sh/2q0k7qn5rxz0bis/AAB42fVn-s4Teqynrs6rgzR3a?dl=0) and put them in your current working directory specified above. Then run the `read.csv(...)` command above. You will likely also need to do this for the environmental data below.
+
 Check out the data structure:
 
 ``` {.r}

@@ -11,13 +11,6 @@
 library(knitr)
 library(rmarkdown)
 
-opts_chunk$set(cache=TRUE,
-               root.dir="/Users/adamw/repos/hSDM_Tutorial",
-               warning=FALSE,
-               message=F,
-               fig.width=15,
-               fig.height=15)
-
 ## set light theme for ggplot
 library(ggplot2)
 theme_set(theme_light()+
@@ -42,7 +35,7 @@ theme_set(theme_light()+
 #' 
 #' You are welcome to follow along on the screen or download the R script and run it on your computer. 
 #' 
-#' The data used below are available in a [public dropbox folder](https://www.dropbox.com/sh/2q0k7qn5rxz0bis/AAB42fVn-s4Teqynrs6rgzR3a?dl=0), though they will be downloaded using code below.  
+#' The data used below are available in a [public dropbox folder](https://www.dropbox.com/sh/2q0k7qn5rxz0bis/AAB42fVn-s4Teqynrs6rgzR3a?dl=0), though they will be downloaded using code below.  You may want to download them now by visiting
 #' 
 #' # Species Distribution Modeling
 #' 
@@ -60,7 +53,7 @@ theme_set(theme_light()+
 #' * Call a Metropolis-within-Gibbs algorithm (coded in C) to estimate model parameters and drastically the computation time compared to other methods (e.g. ~2-10x faster than OpenBUGS).
 #' 
 #' ### Software for modeling species distribution including imperfect detection.
-#' ![hSDM](../assets/DetectionMods.png)
+#' ![hSDM](assets/DetectionMods.png)
 #' 
 #' ## The problem of imperfect detection
 #' 
@@ -94,13 +87,13 @@ registerDoParallel(ncores)
 #' 
 #' ## Example Species: *Montane Woodcreeper* (_Lepidocolaptes lacrymiger_)
 #' 
-#' <img src="../assets/Lepidocolaptes_lacrymiger.jpg" alt="Lepidocolaptes_lacrymiger Photo" width="250px" />
+#' <img src="assets/Lepidocolaptes_lacrymiger.jpg" alt="Lepidocolaptes_lacrymiger Photo" width="250px" />
 #' 
 #' <br><span style="color:grey; font-size:1em;">Figure from [hbw.com](http://www.hbw.com/species/montane-woodcreeper-lepidocolaptes-lacrymiger) </span>
 #' 
 #' > This species has a large range, occurring from the coastal cordillera of Venezuela along the Andes south to south-east Peru and central Bolivia. [birdlife.org](http://www.birdlife.org/datazone/speciesfactsheet.php?id=31946)
 #' 
-#' <img src="../assets/Lepidocolaptes_lacrymiger_range.png" alt="Lepidocolaptes_lacrymiger Photo" width="200px" />
+#' <img src="assets/Lepidocolaptes_lacrymiger_range.png" alt="Lepidocolaptes_lacrymiger Photo" width="200px" />
 #' 
 #' <br><span style="color:grey; font-size:1em;">Data via [MOL.org](http://map.mol.org/maps/Lepidocolaptes%20lacrymiger) </span>
 #' 
@@ -181,21 +174,25 @@ if(!file.exists(fspData)) {
 spd_all=read.csv(fspData)
 
 #' 
+#' > If you have trouble with the download, you can also download these files via the [DropBox website](https://www.dropbox.com/sh/2q0k7qn5rxz0bis/AAB42fVn-s4Teqynrs6rgzR3a?dl=0) and put them in your current working directory specified above.  Then run the `read.csv(...)` command above.  You will likely also need to do this for the environmental data below.
+#' 
+#' 
 #' Check out the data structure:
 ## ----headSpd, results='asis'---------------------------------------------
 kable(head(spd_all[,-1]))
 
 #' 
 #' Explore  observer effort: sampling duration, distance travelled, and area surveyed.
-## ----spdDurationPlot-----------------------------------------------------
+## ----spdDurationPlot,fig.width=10,fig.height=7---------------------------
 ggplot(spd_all,aes(
   y=duration_minutes/60,
   x=effort_distance_km,
   colour=presence==1,
   order=as.factor(presence)))+
-  ylab("Sampling Duration (hours)")+
+  scale_colour_manual(values=c("grey","red"))+
+  ylab("Sampling Duration\n(hours)")+
   xlab("Sampling Distance (km)")+
-  labs(col = "Observed\nPresence")+
+  labs(colour = "Observed\nPresence")+
   geom_point()+scale_x_log10()
 
 #' 
@@ -405,11 +402,11 @@ thin=1
 #' 
 #' **Ecological process:**
 #' 
-#'  ![](../assets/M1.png)
+#'  ![](assets/M1.png)
 #' 
 #' **Observation process:**
 #' 
-#'  ![](../assets/M2.png)
+#'  ![](assets/M2.png)
 #' 
 #' In this example we'll assume a spatially constant p(observation|presence), but it's also possible to put in covariates for this parameter.
 #' 
