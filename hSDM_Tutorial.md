@@ -54,18 +54,52 @@ Load libraries
 --------------
 
 ``` {.r}
-library(hSDM)
-library(ggplot2)
-library(rasterVis)
-library(raster)
-library(maptools)
-library(dplyr)
+packages=c("hSDM","ggplot2","rasterVis","maptools","maps","dplyr","coda","doParallel","knitr","markdown","rgdal")
 
-library(RCurl)  # Downloading from DropBox
+needpackages=packages[!packages%in%rownames(installed.packages())]
+lapply(needpackages,install.packages)
+```
 
-library(coda)  # Summarizing model output
+    ## list()
 
-library(doParallel)  #running models in parallel
+``` {.r}
+lapply(packages, require, character.only=T)
+```
+
+    ## [[1]]
+    ## [1] TRUE
+    ## 
+    ## [[2]]
+    ## [1] TRUE
+    ## 
+    ## [[3]]
+    ## [1] TRUE
+    ## 
+    ## [[4]]
+    ## [1] TRUE
+    ## 
+    ## [[5]]
+    ## [1] TRUE
+    ## 
+    ## [[6]]
+    ## [1] TRUE
+    ## 
+    ## [[7]]
+    ## [1] TRUE
+    ## 
+    ## [[8]]
+    ## [1] TRUE
+    ## 
+    ## [[9]]
+    ## [1] TRUE
+    ## 
+    ## [[10]]
+    ## [1] TRUE
+    ## 
+    ## [[11]]
+    ## [1] TRUE
+
+``` {.r}
 ncores=2  # number of processor cores you would like to use
 registerDoParallel(ncores)
 ```
@@ -118,7 +152,7 @@ if(!file.exists(fExpertRange)){
                      "%20seasonality%20FROM%20get_tile('jetz','range','",
                      paste(strsplit(sp,"_")[[1]],collapse="%20"),
                      "','jetz_maps')&format=shp&filename=",sp),
-              destfile=sub("shp","zip",fExpertRange))
+              destfile=sub("shp","zip",fExpertRange),mode="wb")
   unzip(sub("shp","zip",fExpertRange))
 }
 ```
@@ -162,8 +196,8 @@ if(!file.exists(fspData)) {
                   "Lepidocolaptes_lacrymiger_points_env.csv?dl=1")
 
     download.file(URL,
-              destfile=fspData,
-              method='curl',extra='-L')
+              destfile=fspData,method="curl",
+              mode="wb",extra='-L')
 }
 
 spd_all=read.csv(fspData)
@@ -299,7 +333,7 @@ URL <- paste0("https://www.dropbox.com/s/7i5hl3gv53l8m4v/",
            "Lepidocolaptes_lacrymiger_env_scaled_small.tif?dl=1")
 
 download.file(URL,
-              destfile=fenvdata,
+              destfile=fenvdata,mode="wb",
               method='curl',extra='-L')
 }
  
@@ -448,7 +482,7 @@ Run the model
 -------------
 
 ``` {.r}
-results=foreach(m=1:nrow(mods)) %dopar% { 
+results=foreach(m=1:nrow(mods),.packages="hSDM") %dopar% { 
   ## if foreach/doParallel are not installed, you can use this line instead
   # for(m in 1:nrow(mods)) { 
   tres=hSDM.ZIB(
@@ -478,7 +512,7 @@ Summarize posterior parameters
 The model returns full posterior distributions for all model parameters. To summarize them you need to choose your summary metric (e.g. mean/median/quantiles).
 
 ``` {.r}
-params=foreach(r1=results,.combine=rbind.data.frame)%do% {
+params=foreach(r1=results,.combine=rbind.data.frame,.packages="coda")%do% {
   data.frame(model=r1$model,
              modelname=r1$modelname,
              parameter=colnames(r1$mcmc),
@@ -524,7 +558,7 @@ Predictions for each cell
 -------------------------
 
 ``` {.r}
-pred=foreach(r1=results,.combine=stack)%dopar% {
+pred=foreach(r1=results,.combine=stack,.packages="raster")%dopar% {
   tr=rasterFromXYZ(cbind(x=pdata$x,
                          y=pdata$y,
                          pred=r1$prob.p.pred))

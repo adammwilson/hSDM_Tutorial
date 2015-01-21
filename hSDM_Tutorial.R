@@ -11,6 +11,13 @@
 library(knitr)
 library(rmarkdown)
 
+opts_chunk$set(cache=TRUE,
+               root.dir="/Users/adamw/repos/hSDM_Tutorial",
+               warning=FALSE,
+               message=F,
+               fig.width=15,
+               fig.height=15)
+
 ## set light theme for ggplot
 library(ggplot2)
 theme_set(theme_light()+
@@ -65,20 +72,16 @@ theme_set(theme_light()+
 #' 
 #' ## Load libraries
 ## ----loadLibraries,message=FALSE,warning=FALSE---------------------------
-library(hSDM)
-library(ggplot2)
-library(rasterVis)
-library(raster)
-library(maptools)
-library(dplyr)
+packages=c("hSDM","ggplot2","rasterVis","maptools","maps","dplyr","coda","doParallel","knitr","markdown","rgdal")
 
-library(RCurl)  # Downloading from DropBox
+needpackages=packages[!packages%in%rownames(installed.packages())]
+lapply(needpackages,install.packages)
+lapply(packages, require, character.only=T)
 
-library(coda)  # Summarizing model output
 
-library(doParallel)  #running models in parallel
 ncores=2  # number of processor cores you would like to use
 registerDoParallel(ncores)
+
 
 
 #' If you don't have the packages above, install them in the package manager or by running `install.packages("doParallel")`. 
@@ -125,7 +128,7 @@ if(!file.exists(fExpertRange)){
                      "%20seasonality%20FROM%20get_tile('jetz','range','",
                      paste(strsplit(sp,"_")[[1]],collapse="%20"),
                      "','jetz_maps')&format=shp&filename=",sp),
-              destfile=sub("shp","zip",fExpertRange))
+              destfile=sub("shp","zip",fExpertRange),mode="wb")
   unzip(sub("shp","zip",fExpertRange))
 }
 
@@ -167,8 +170,8 @@ if(!file.exists(fspData)) {
                   "Lepidocolaptes_lacrymiger_points_env.csv?dl=1")
 
     download.file(URL,
-              destfile=fspData,
-              method='curl',extra='-L')
+              destfile=fspData,method="curl",
+              mode="wb",extra='-L')
 }
 
 spd_all=read.csv(fspData)
@@ -284,7 +287,7 @@ URL <- paste0("https://www.dropbox.com/s/7i5hl3gv53l8m4v/",
            "Lepidocolaptes_lacrymiger_env_scaled_small.tif?dl=1")
 
 download.file(URL,
-              destfile=fenvdata,
+              destfile=fenvdata,mode="wb",
               method='curl',extra='-L')
 }
  
@@ -414,7 +417,7 @@ thin=1
 #' ## Run the model
 #' 
 ## ----runmodel------------------------------------------------------------
-results=foreach(m=1:nrow(mods)) %dopar% { 
+results=foreach(m=1:nrow(mods),.packages="hSDM") %dopar% { 
   ## if foreach/doParallel are not installed, you can use this line instead
   # for(m in 1:nrow(mods)) { 
   tres=hSDM.ZIB(
@@ -443,7 +446,7 @@ results=foreach(m=1:nrow(mods)) %dopar% {
 #' The model returns full posterior distributions for all model parameters.  To summarize them you need to choose your summary metric (e.g. mean/median/quantiles). 
 #' 
 ## ----SummarizePosteriors-------------------------------------------------
-params=foreach(r1=results,.combine=rbind.data.frame)%do% {
+params=foreach(r1=results,.combine=rbind.data.frame,.packages="coda")%do% {
   data.frame(model=r1$model,
              modelname=r1$modelname,
              parameter=colnames(r1$mcmc),
@@ -479,7 +482,7 @@ kable(pDetect,row.names=F)
 #' 
 #' ## Predictions for each cell
 ## ----pPred---------------------------------------------------------------
-pred=foreach(r1=results,.combine=stack)%dopar% {
+pred=foreach(r1=results,.combine=stack,.packages="raster")%dopar% {
   tr=rasterFromXYZ(cbind(x=pdata$x,
                          y=pdata$y,
                          pred=r1$prob.p.pred))
