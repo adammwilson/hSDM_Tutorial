@@ -23,7 +23,7 @@ library(ggplot2)
 theme_set(theme_light()+
             theme(text=element_text(size = 38)))
 
-# purl("hSDM_Tutorial.Rmd","hSDM_Tutorial.R",documentation=2)
+# purl("../hSDM_Tutorial.Rmd","../hSDM_Tutorial.R",documentation=2)
 ```
 # Introduction to hSDM
 
@@ -71,12 +71,12 @@ _________________
 # Example application
 
 ## Load libraries
-```{r loadLibraries,message=FALSE,warning=FALSE}
+```{r loadLibraries,message=FALSE,results='hide',warning=FALSE}
 packages=c("hSDM","ggplot2","rasterVis","maptools","maps","dplyr","coda","doParallel","knitr","markdown","rgdal")
 
 needpackages=packages[!packages%in%rownames(installed.packages())]
 lapply(needpackages,install.packages)
-lapply(packages, require, character.only=T)
+lapply(packages, require, character.only=T,quietly=T)
 
 
 ncores=2  # number of processor cores you would like to use

@@ -58,48 +58,9 @@ packages=c("hSDM","ggplot2","rasterVis","maptools","maps","dplyr","coda","doPara
 
 needpackages=packages[!packages%in%rownames(installed.packages())]
 lapply(needpackages,install.packages)
-```
+lapply(packages, require, character.only=T,quietly=T)
 
-    ## list()
 
-``` {.r}
-lapply(packages, require, character.only=T)
-```
-
-    ## [[1]]
-    ## [1] TRUE
-    ## 
-    ## [[2]]
-    ## [1] TRUE
-    ## 
-    ## [[3]]
-    ## [1] TRUE
-    ## 
-    ## [[4]]
-    ## [1] TRUE
-    ## 
-    ## [[5]]
-    ## [1] TRUE
-    ## 
-    ## [[6]]
-    ## [1] TRUE
-    ## 
-    ## [[7]]
-    ## [1] TRUE
-    ## 
-    ## [[8]]
-    ## [1] TRUE
-    ## 
-    ## [[9]]
-    ## [1] TRUE
-    ## 
-    ## [[10]]
-    ## [1] TRUE
-    ## 
-    ## [[11]]
-    ## [1] TRUE
-
-``` {.r}
 ncores=2  # number of processor cores you would like to use
 registerDoParallel(ncores)
 ```
