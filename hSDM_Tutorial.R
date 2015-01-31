@@ -7,23 +7,23 @@
 #'     variant: markdown_github
 #' ---
 #' 
-## ----, echo=FALSE, warning=FALSE, cache=FALSE----------------------------
-library(knitr)
-library(rmarkdown)
-
-opts_chunk$set(cache=TRUE,
-               root.dir="/Users/adamw/repos/hSDM_Tutorial",
-               warning=FALSE,
-               message=F,
-               fig.width=15,
-               fig.height=15)
-
-## set light theme for ggplot
-library(ggplot2)
-theme_set(theme_light()+
-            theme(text=element_text(size = 38)))
-
-# purl("../hSDM_Tutorial.Rmd","../hSDM_Tutorial.R",documentation=2)
+## ----, echo=FALSE, warning=FALSE, cache=FALSE, eval=FALSE----------------
+## library(knitr)
+## library(rmarkdown)
+## 
+## opts_chunk$set(cache=TRUE,
+##                root.dir="/Users/adamw/repos/hSDM_Tutorial",
+##                warning=FALSE,
+##                message=F,
+##                fig.width=15,
+##                fig.height=15)
+## 
+## ## set light theme for ggplot
+## library(ggplot2)
+## theme_set(theme_light()+
+##             theme(text=element_text(size = 38)))
+## 
+## # purl("hSDM_Tutorial.Rmd","hSDM_Tutorial.R",documentation=2)
 
 #' # Introduction to hSDM
 #' 
@@ -170,7 +170,7 @@ if(!file.exists(fspData)) {
                   "Lepidocolaptes_lacrymiger_points_env.csv?dl=1")
 
     download.file(URL,
-              destfile=fspData,method="curl",
+              destfile=fspData,
               mode="wb",extra='-L')
 }
 
@@ -288,7 +288,7 @@ URL <- paste0("https://www.dropbox.com/s/7i5hl3gv53l8m4v/",
 
 download.file(URL,
               destfile=fenvdata,mode="wb",
-              method='curl',extra='-L')
+              extra='-L')
 }
  
 env=stack(fenvdata)
