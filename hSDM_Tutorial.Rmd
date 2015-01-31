@@ -23,7 +23,7 @@ library(ggplot2)
 theme_set(theme_light()+
             theme(text=element_text(size = 38)))
 
-# purl("../hSDM_Tutorial.Rmd","../hSDM_Tutorial.R",documentation=2)
+# purl("hSDM_Tutorial.Rmd","hSDM_Tutorial.R",documentation=2)
 ```
 # Introduction to hSDM
 
