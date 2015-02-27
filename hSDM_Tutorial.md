@@ -105,18 +105,7 @@ setwd(datadir)
 Extract species 'expert range' via MOL.
 ---------------------------------------
 
-``` {.r}
-fExpertRange=paste0(sp,".shp")
-if(!file.exists(fExpertRange)){
-  download.file(paste0("http://mol.cartodb.com/api/v2/sql?",
-                     "q=SELECT%20ST_TRANSFORM(the_geom_webmercator,4326)%20as%20the_geom,",
-                     "%20seasonality%20FROM%20get_tile('jetz','range','",
-                     paste(strsplit(sp,"_")[[1]],collapse="%20"),
-                     "','jetz_maps')&format=shp&filename=",sp),
-              destfile=sub("shp","zip",fExpertRange),mode="wb")
-  unzip(sub("shp","zip",fExpertRange))
-}
-```
+REMOVED
 
 > Full documentation and release of the MOL API in the works.
 
